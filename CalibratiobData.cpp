@@ -65,10 +65,10 @@ bool CalibrationData::LoadCalibrationYML(QString const& filename)
     return false;
   }
 
-  fs["Cam_K"] >> Cam_K;
-  fs["Cam_kc"] >> Cam_kc;
-  fs["Proj_K"] >> Proj_K;
-  fs["Proj_Kc"] >> Proj_kc;
+  fs["cam_K"] >> Cam_K;
+  fs["cam_kc"] >> Cam_kc;
+  fs["proj_K"] >> Proj_K;
+  fs["proj_Kc"] >> Proj_kc;
   fs["R"] >> R;
   fs["T"] >> T;
 

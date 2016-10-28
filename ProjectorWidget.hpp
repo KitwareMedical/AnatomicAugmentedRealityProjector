@@ -18,7 +18,7 @@ public:
   ProjectorWidget(QWidget * parent = 0, Qt::WindowFlags flags = 0);
   ~ProjectorWidget();
 
-  cv::Mat CreateLineImage(int line_coord);
+  cv::Mat CreateLineImage();
   std::vector<cv::Point2i> GetCoordLine(cv::Mat image);
 
   QPixmap GetPixmap() const { return this->Pixmap; };

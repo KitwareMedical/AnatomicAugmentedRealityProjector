@@ -19,18 +19,22 @@ ProjectorWidget::~ProjectorWidget()
 }
 
 // /!\ Use of usigned char to code the color between 0 (black) and 255 (white)
-cv::Mat ProjectorWidget::CreateLineImage(int line_coord)
+cv::Mat ProjectorWidget::CreateLineImage()
 {
   cv::Mat image = cv::Mat::zeros(this->Height, this->Width, CV_8UC1); // use CV_32S for int
   for (int j = 0; j < image.cols; j++)
   {
-    image.at<unsigned char>(line_coord, j) = 255;
+    for (int t = 0; t < this->LineThickness; t++)
+    {
+      image.at<unsigned char>(this->Row + t, j) = 255;
+    }
   }
   return image;
 }
 
 std::vector<cv::Point2i> ProjectorWidget::GetCoordLine(cv::Mat image)
 {
+  // TODO: condition on type of matrix 
   std::vector<cv::Point2i> coord;
   for (int i = 0; i < image.rows; i++)
   {
@@ -39,7 +43,7 @@ std::vector<cv::Point2i> ProjectorWidget::GetCoordLine(cv::Mat image)
     //std::cout << "row :" << *row << std::endl;
     for (int j = 0; j < image.cols; j++)
     {
-      if (row[j] != 0) // or =255
+      if ((int)row[j] != 0) // or =255
       {
         coord.push_back(cv::Point2i(i, j));
       }

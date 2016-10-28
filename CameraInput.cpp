@@ -11,7 +11,7 @@
 
 using namespace FlyCapture2;
 
-CameraInput::CameraInput() : NbImages(1)
+CameraInput::CameraInput() : NbImages(1), Camera()
 {}
 
 CameraInput::~CameraInput()
@@ -126,7 +126,7 @@ void CameraInput::SetCameraFrameRate(double frameRate)
       }
     }
   }
-  std::cout << "Using frame rate of " << std::fixed << std::setprecision(1) << frameRate << std::endl;
+  std::cout << "Asking frame rate of " << std::fixed << std::setprecision(1) << frameRate << std::endl;
   this->GetCameraFrameRate();
 }
 
@@ -135,7 +135,7 @@ double CameraInput::GetCameraFrameRate()
   Error error;
 
   // Check if the camera supports the FRAME_RATE property
-  std::cout << "Detecting frame rate from camera... " << std::endl;
+  //std::cout << "Detecting frame rate from camera... " << std::endl;
   PropertyInfo propInfo;
   propInfo.type = FRAME_RATE;
   error = this->Camera.GetPropertyInfo(&propInfo);
@@ -222,7 +222,6 @@ void CameraInput::RecordImages()
       return;
     }
   }
-
   std::cout << std::endl;
   std::cout << "Finished grabbing images" << std::endl;
 }
