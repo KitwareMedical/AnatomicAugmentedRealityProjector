@@ -58,7 +58,7 @@ inline QImage cvMatToQImage(const cv::Mat &mat)
 {
   switch (mat.type())
   {
-  // 8-bit, 3 channel
+    // 8-bit, 3 channel
   case CV_8UC3:
   {
     QImage image(mat.data, mat.cols, mat.rows, static_cast<int>(mat.step), QImage::Format_RGB888);
@@ -168,7 +168,7 @@ void MainWindow::DisplayCamera()
 
 void MainWindow::on_cam_display_clicked()
 {
-  CamInput.Run(); 
+  CamInput.Run();
   this->timer->start();
 }
 
@@ -215,7 +215,7 @@ void MainWindow::_on_new_projector_image(QPixmap pixmap)
 void MainWindow::on_analyze_clicked()
 {
   // Substract 2 images to keep only the line illuminated by the projector
-  char* dir = "\Results\\";
+  char* dir = "Results\\";
   QString filename = QFileDialog::getOpenFileName(this, "Open decoded files", dir);
   if (filename.isEmpty())
   {
@@ -233,7 +233,7 @@ void MainWindow::on_analyze_clicked()
   cv::Mat mat_color_ref = cv::imread(qPrintable(filename), CV_LOAD_IMAGE_COLOR);
   cv::Mat mat_gray_ref;
   cv::cvtColor(mat_color_ref, mat_gray_ref, CV_BGR2GRAY);
-  
+
   if (!mat_gray.data || !mat_gray_ref.data)
   {
     qCritical() << "ERROR invalid cv::Mat gray data\n";
@@ -246,7 +246,7 @@ void MainWindow::on_analyze_clicked()
   // check if the calib file is valid
 
   std::vector<cv::Point2i> cam_points;
-  
+
   for (int i = 0; i < mat.rows; i++)
   {
     for (int j = 0; j < mat.cols; j++)
@@ -257,34 +257,73 @@ void MainWindow::on_analyze_clicked()
       }
     }
   }
-  
+
   QImage im = this->Projector.GetPixmap().toImage().convertToFormat(QImage::Format_Indexed8, Qt::AvoidDither);
-  std::cout << im.format() << std::endl;
   cv::Mat mat_proj = QImageToCvMat(im);
 
   std::vector<cv::Point2i> proj_points = this->Projector.GetCoordLine(mat_proj);
-  int size_proj = proj_points.size();
+  std::vector<cv::Point2i>::iterator it_proj = proj_points.begin();
+  std::vector<cv::Point3d> vec_w2;
+  std::vector<cv::Point3d> vec_v2;
+  cv::Mat inp2(1, 1, CV_64FC2);
+  cv::Mat outp2;
+  cv::Point3d w2, v2;
+  for (it_proj; it_proj != proj_points.end(); ++it_proj)
+  {
+    //to image camera coordinates
+    inp2.at<cv::Vec2d>(0, 0) = cv::Vec2d(it_proj->x, it_proj->y);
+
+    cv::undistortPoints(inp2, outp2, this->Calib.Proj_K, this->Calib.Proj_kc);
+    assert(outp2.type() == CV_64FC2 && outp2.rows == 1 && outp2.cols == 1);
+    const cv::Vec2d & outvec2 = outp2.at<cv::Vec2d>(0, 0);
+    cv::Point3d u2(outvec2[0], outvec2[1], 1.0);
+
+    //to world coordinates
+    w2 = cv::Point3d(cv::Mat(this->Calib.R.t()*(cv::Mat(u2) - this->Calib.T)));
+    vec_w2.push_back(w2);
+    //world rays
+    v2 = cv::Point3d(cv::Mat(this->Calib.R.t()*cv::Mat(u2)));
+    vec_v2.push_back(v2);
+  }
+  assert(vec_v2.size() == vec_w2.size());
+  assert(vec_v2.size() == proj_points.size());
 
   cv::Mat pointcloud = cv::Mat(this->Projector.GetHeight(), this->Projector.GetWidth(), CV_32FC3);
   // imageTest is used to control which points have been used on the projector for the reconstruction
   cv::Mat imageTest = cv::Mat::zeros(this->Projector.GetHeight(), this->Projector.GetWidth(), CV_8UC1);
-
   double distance_min, distance;
   cv::Point2i good_proj_point;
   cv::Point3d p, good_p;
   std::vector<cv::Point2i>::iterator it_cam = cam_points.begin();
+  cv::Mat inp1(1, 1, CV_64FC2);
+  cv::Mat outp1;
+  cv::Point3d w1, v1;
   for (it_cam; it_cam != cam_points.end(); ++it_cam)
   {
+    //to image camera coordinates
+
+    inp1.at<cv::Vec2d>(0, 0) = cv::Vec2d(it_cam->x, it_cam->y);
+
+    cv::undistortPoints(inp1, outp1, this->Calib.Cam_K, this->Calib.Cam_kc);
+    assert(outp1.type() == CV_64FC2 && outp1.rows == 1 && outp1.cols == 1);
+    const cv::Vec2d & outvec1 = outp1.at<cv::Vec2d>(0, 0);
+    cv::Point3d u1(outvec1[0], outvec1[1], 1.0);
+
+    //to world coordinates
+    w1 = u1;
+    //world rays
+    v1 = w1;
+
+    //it_proj = proj_points.begin();
     distance_min = 9999;
-    std::vector<cv::Point2i>::iterator it_proj = proj_points.begin();
-    for (it_proj; it_proj != proj_points.end(); ++it_proj)
+    for (int i = 0; i < vec_v2.size(); i++)
     {
-      triangulate_stereo(this->Calib.Cam_K, this->Calib.Cam_kc, this->Calib.Proj_K, this->Calib.Proj_kc, this->Calib.R.t(), this->Calib.T, *it_cam, *it_proj, p, &distance);
+      p = approximate_ray_intersection(v1, w1, vec_v2.at(i), vec_w2.at(i), &distance);
       if (distance < distance_min)
       {
         distance_min = distance;
         good_p = p;
-        good_proj_point = *it_proj;
+        good_proj_point = proj_points.at(i);
       }
     }
     cv::Vec3f & cloud_point = pointcloud.at<cv::Vec3f>(good_proj_point.x, good_proj_point.y);
@@ -293,7 +332,7 @@ void MainWindow::on_analyze_clicked()
     cloud_point[2] = good_p.z;
     imageTest.at<unsigned char>(good_proj_point.x, good_proj_point.y) = 255;
   }
-   if (!pointcloud.data)
+  if (!pointcloud.data)
   {
     qCritical() << "ERROR, reconstruction failed\n";
   }
