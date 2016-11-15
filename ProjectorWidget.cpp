@@ -8,7 +8,7 @@
 
 ProjectorWidget::ProjectorWidget(QWidget * parent, Qt::WindowFlags flags) :
   QWidget(parent, flags),
-  Height(720),
+  Height(1080),
   Width(1920),
   LineThickness(1), 
   Row(100)
@@ -45,7 +45,7 @@ std::vector<cv::Point2i> ProjectorWidget::GetCoordLine(cv::Mat image)
     {
       if ((int)row[j] != 0) // or =255
       {
-        coord.push_back(cv::Point2i(i, j));
+        coord.push_back(cv::Point2i(j, i));
       }
     }
   }

@@ -139,7 +139,7 @@ void MainWindow::on_proj_display_clicked()
 
   connect(&(this->Projector), SIGNAL(new_image(QPixmap)), this, SLOT(_on_new_projector_image(QPixmap)));
 
-  this->Projector.start();
+  //this->Projector.start();
 
   //disconnect projector display signal
   disconnect(&(this->Projector), SIGNAL(new_image(QPixmap)), this, SLOT(_on_new_projector_image(QPixmap)));
@@ -253,7 +253,7 @@ void MainWindow::on_analyze_clicked()
     {
       if ((int)mat.at<unsigned char>(i, j) > 50)
       {
-        cam_points.push_back(cv::Point2i(i, j));
+        cam_points.push_back(cv::Point2i(j, i));
       }
     }
   }
@@ -326,11 +326,11 @@ void MainWindow::on_analyze_clicked()
         good_proj_point = proj_points.at(i);
       }
     }
-    cv::Vec3f & cloud_point = pointcloud.at<cv::Vec3f>(good_proj_point.x, good_proj_point.y);
+    cv::Vec3f & cloud_point = pointcloud.at<cv::Vec3f>(good_proj_point.y, good_proj_point.x);
     cloud_point[0] = good_p.x;
     cloud_point[1] = good_p.y;
     cloud_point[2] = good_p.z;
-    imageTest.at<unsigned char>(good_proj_point.x, good_proj_point.y) = 255;
+    imageTest.at<unsigned char>(good_proj_point.y, good_proj_point.x) = 255;
   }
   if (!pointcloud.data)
   {
