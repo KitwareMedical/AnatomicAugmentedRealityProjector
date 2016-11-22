@@ -243,10 +243,8 @@ void MainWindow::on_analyze_clicked()
   {
     qCritical() << "ERROR invalid cv::Mat data\n";
   }
-  // check if the calib file is valid
 
   std::vector<cv::Point2i> cam_points;
-
   for (int i = 0; i < mat.rows; i++)
   {
     for (int j = 0; j < mat.cols; j++)
@@ -258,42 +256,25 @@ void MainWindow::on_analyze_clicked()
     }
   }
 
-  QImage im = this->Projector.GetPixmap().toImage().convertToFormat(QImage::Format_Indexed8, Qt::AvoidDither);
-  cv::Mat mat_proj = QImageToCvMat(im);
+  cv::Mat pointcloud = cv::Mat(mat.rows, mat.cols, CV_32FC3);
+  // imageTest is used to control which points have been used on the projector for the reconstruction
+  cv::Mat imageTest = cv::Mat::zeros( mat.rows, mat.cols, CV_8UC1 );
 
-  std::vector<cv::Point2i> proj_points = this->Projector.GetCoordLine(mat_proj);
-  std::vector<cv::Point2i>::iterator it_proj = proj_points.begin();
-  std::vector<cv::Point3d> vec_w2;
-  std::vector<cv::Point3d> vec_v2;
+  // Computation of the point used to define the plane of the projector
   cv::Mat inp2(1, 1, CV_64FC2);
   cv::Mat outp2;
-  cv::Point3d w2, v2;
-  for (it_proj; it_proj != proj_points.end(); ++it_proj)
-  {
-    //to image camera coordinates
-    inp2.at<cv::Vec2d>(0, 0) = cv::Vec2d(it_proj->x, it_proj->y);
+  cv::Point3d w2;
+  // to image camera coordinates
+  inp2.at<cv::Vec2d>( 0, 0 ) = cv::Vec2d( 1, this->Projector.GetRow() );
+  cv::undistortPoints( inp2, outp2, this->Calib.Proj_K, this->Calib.Proj_kc );
+  assert( outp2.type() == CV_64FC2 && outp2.rows == 1 && outp2.cols == 1 );
+  const cv::Vec2d & outvec2 = outp2.at<cv::Vec2d>( 0, 0 );
+  cv::Point3d u2( outvec2[ 0 ], outvec2[ 1 ], 1.0 );
+  //to world coordinates
+  w2 = cv::Point3d( cv::Mat( this->Calib.R.t()*( cv::Mat( u2 ) - this->Calib.T ) ) );
 
-    cv::undistortPoints(inp2, outp2, this->Calib.Proj_K, this->Calib.Proj_kc);
-    assert(outp2.type() == CV_64FC2 && outp2.rows == 1 && outp2.cols == 1);
-    const cv::Vec2d & outvec2 = outp2.at<cv::Vec2d>(0, 0);
-    cv::Point3d u2(outvec2[0], outvec2[1], 1.0);
-
-    //to world coordinates
-    w2 = cv::Point3d(cv::Mat(this->Calib.R.t()*(cv::Mat(u2) - this->Calib.T)));
-    vec_w2.push_back(w2);
-    //world rays
-    v2 = cv::Point3d(cv::Mat(this->Calib.R.t()*cv::Mat(u2)));
-    vec_v2.push_back(v2);
-  }
-  assert(vec_v2.size() == vec_w2.size());
-  assert(vec_v2.size() == proj_points.size());
-
-  cv::Mat pointcloud = cv::Mat(this->Projector.GetHeight(), this->Projector.GetWidth(), CV_32FC3);
-  // imageTest is used to control which points have been used on the projector for the reconstruction
-  cv::Mat imageTest = cv::Mat::zeros(this->Projector.GetHeight(), this->Projector.GetWidth(), CV_8UC1);
-  double distance_min, distance;
-  cv::Point2i good_proj_point;
-  cv::Point3d p, good_p;
+  double distance;
+  cv::Point3d p;
   std::vector<cv::Point2i>::iterator it_cam = cam_points.begin();
   cv::Mat inp1(1, 1, CV_64FC2);
   cv::Mat outp1;
@@ -301,36 +282,23 @@ void MainWindow::on_analyze_clicked()
   for (it_cam; it_cam != cam_points.end(); ++it_cam)
   {
     //to image camera coordinates
-
     inp1.at<cv::Vec2d>(0, 0) = cv::Vec2d(it_cam->x, it_cam->y);
-
     cv::undistortPoints(inp1, outp1, this->Calib.Cam_K, this->Calib.Cam_kc);
     assert(outp1.type() == CV_64FC2 && outp1.rows == 1 && outp1.cols == 1);
     const cv::Vec2d & outvec1 = outp1.at<cv::Vec2d>(0, 0);
     cv::Point3d u1(outvec1[0], outvec1[1], 1.0);
-
     //to world coordinates
     w1 = u1;
     //world rays
     v1 = w1;
 
-    //it_proj = proj_points.begin();
-    distance_min = 9999;
-    for (int i = 0; i < vec_v2.size(); i++)
-    {
-      p = approximate_ray_intersection(v1, w1, vec_v2.at(i), vec_w2.at(i), &distance);
-      if (distance < distance_min)
-      {
-        distance_min = distance;
-        good_p = p;
-        good_proj_point = proj_points.at(i);
-      }
-    }
-    cv::Vec3f & cloud_point = pointcloud.at<cv::Vec3f>(good_proj_point.y, good_proj_point.x);
-    cloud_point[0] = good_p.x;
-    cloud_point[1] = good_p.y;
-    cloud_point[2] = good_p.z;
-    imageTest.at<unsigned char>(good_proj_point.y, good_proj_point.x) = 255;
+    cv::Point2d p_proj = { 0,0 };
+    p = approximate_ray_plane_intersection( this->Calib.R.t(), this->Calib.T, v1, w1, w2, &p_proj, &distance );
+    cv::Vec3f & cloud_point = pointcloud.at<cv::Vec3f>((*it_cam).y, (*it_cam).x);
+    cloud_point[0] = p.x;
+    cloud_point[1] = p.y;
+    cloud_point[2] = p.z;
+    imageTest.at<unsigned char>( ( *it_cam ).y, ( *it_cam ).x ) = 255;
   }
   if (!pointcloud.data)
   {
@@ -420,3 +388,23 @@ cv::Point3d MainWindow::approximate_ray_intersection(const cv::Point3d & v1, con
   }
   return p;
 }
+
+cv::Point3d MainWindow::approximate_ray_plane_intersection( const cv::Mat & Rt, const cv::Mat & T,
+  const cv::Point3d & vc, const cv::Point3d & qc, const cv::Point3d & qp, cv::Point2d * p_proj, double * distance )
+  {
+  cv::Mat vcMat = cv::Mat( vc );
+  cv::Mat qcMat = cv::Mat( qc );
+  cv::Mat qpMat = cv::Mat( qp );
+
+  cv::Mat num = (Rt*qpMat).t() * ( ( -Rt*T ) - qcMat);
+  cv::Mat denum = (Rt*qpMat).t()*vcMat;
+  double lambda = num.at<double>(0,0) / denum.at<double>(0,0);
+
+  cv::Point3d p = lambda*vc + qc;
+
+  //cv::Mat p_projMat = ( Rt*qpMat ).t() * ( -Rt*T ) / ( Rt*qpMat ).t();
+  //std::cout << "p_projMat : " << p_projMat << std::endl;
+  //*p_proj = cv::Point2d (p_projMat);
+
+  return p;
+  }
