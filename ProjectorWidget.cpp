@@ -1,7 +1,10 @@
 #include "ProjectorWidget.hpp"
 
+#include <opencv2/imgproc/imgproc.hpp>
+
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QMessageBox>
 #include <QPainter>
 
 #include <iostream>
@@ -22,15 +25,37 @@ ProjectorWidget::~ProjectorWidget()
 cv::Mat ProjectorWidget::CreateLineImage()
 {
   cv::Mat image = cv::Mat::zeros(this->Height, this->Width, CV_8UC1); // use CV_32S for int
-  for (int j = 0; j < image.cols; j++)
+  int lmax = 5 ;
+  for (int j = 0; j < image.rows; j++)
   {
-    for (int t = 0; t < this->LineThickness; t++)
+    /*for (int t = 0; t < this->LineThickness; t++)
     {
       image.at<unsigned char>(this->Row + t, j) = 255;
-    }
+    }*/
+    for( int i = 0; i < image.cols; i = i + 2 * lmax )
+      {
+      for( int l = 0; l < lmax; l++ )
+        {
+        image.at<unsigned char>( j, i + l ) = 255;
+        }
+      }
   }
   return image;
 }
+
+cv::Mat ProjectorWidget::CreatePattern()
+  {
+  cv::Mat image = cv::Mat::zeros( this->Height, this->Width, CV_8UC3 );
+  for( int j = 0; j < image.rows; j++ )
+    {
+    for( int i = 0; i < image.cols; i++ )
+      {
+      image.at<cv::Vec3b>( j, i ) = { unsigned char(j*180/this->GetHeight()), 255, 255 };
+      }
+    }
+  cv::cvtColor( image, image, cv::COLOR_HSV2BGR );
+  return image;
+  }
 
 std::vector<cv::Point2i> ProjectorWidget::GetCoordLine(cv::Mat image)
 {
@@ -76,7 +101,21 @@ void ProjectorWidget::start()
 {
   QDesktopWidget * desktop = QApplication::desktop();
   int screen = desktop->screenCount();
-  std::cout << screen << std::endl;
+  if( screen == 1 )
+    {
+    QMessageBox msgBox;
+    msgBox.setWindowTitle( "Warning" );
+    msgBox.setText( "Only one screen was detected. Are you sure you want to continue ?" );
+    msgBox.setWindowFlags( Qt::WindowStaysOnTopHint );
+    msgBox.setStandardButtons( QMessageBox::Yes );
+    msgBox.addButton( QMessageBox::No );
+    msgBox.setDefaultButton( QMessageBox::No );
+    if( msgBox.exec() == QMessageBox::No )
+      {
+      std::cout << "Pattern not displayed. Connect a projector and try again." << std::endl;
+      return;
+      }
+    }
   // We choose the last screen added (highest number) = the projector
   //display
   QRect screen_resolution = desktop->screenGeometry(screen - 1);

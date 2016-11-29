@@ -19,6 +19,7 @@ public:
   ~ProjectorWidget();
 
   cv::Mat CreateLineImage();
+  cv::Mat CreatePattern();
   std::vector<cv::Point2i> GetCoordLine(cv::Mat image);
 
   QPixmap GetPixmap() const { return this->Pixmap; };

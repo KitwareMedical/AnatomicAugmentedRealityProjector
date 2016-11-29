@@ -121,7 +121,8 @@ inline cv::Mat QImageToCvMat(const QImage& image, bool inCloneImageData = true)
 
 void MainWindow::on_proj_display_clicked()
 {
-  cv::Mat mat = this->Projector.CreateLineImage();
+  //cv::Mat mat = this->Projector.CreateLineImage();
+  cv::Mat mat = this->Projector.CreatePattern();
   if (!mat.data)
   {
     std::cout << "Could not open or find the image" << std::endl;
@@ -139,7 +140,7 @@ void MainWindow::on_proj_display_clicked()
 
   connect(&(this->Projector), SIGNAL(new_image(QPixmap)), this, SLOT(_on_new_projector_image(QPixmap)));
 
-  //this->Projector.start();
+  this->Projector.start();
 
   //disconnect projector display signal
   disconnect(&(this->Projector), SIGNAL(new_image(QPixmap)), this, SLOT(_on_new_projector_image(QPixmap)));
@@ -215,97 +216,129 @@ void MainWindow::_on_new_projector_image(QPixmap pixmap)
 void MainWindow::on_analyze_clicked()
 {
   // Substract 2 images to keep only the line illuminated by the projector
-  char* dir = "Results\\";
-  QString filename = QFileDialog::getOpenFileName(this, "Open decoded files", dir);
-  if (filename.isEmpty())
+  QString dir = "C:\\Users\\Kitware\\Desktop\\Mode2-280fps\\fc2_save_2016-11-22-181440-0133.bmp";
+  //QString filename = QFileDialog::getOpenFileName(this, "Open decoded files", dir);
+  if (dir.isEmpty())
   {
     return;
   }
-  cv::Mat mat_color = cv::imread(qPrintable(filename), CV_LOAD_IMAGE_COLOR);
-  cv::Mat mat_gray;
-  cv::cvtColor(mat_color, mat_gray, CV_BGR2GRAY);
-
-  filename = QFileDialog::getOpenFileName(this, "Open decoded files", dir);
-  if (filename.isEmpty())
-  {
-    return;
-  }
-  cv::Mat mat_color_ref = cv::imread(qPrintable(filename), CV_LOAD_IMAGE_COLOR);
+  cv::Mat mat_color_ref = cv::imread(qPrintable(dir), CV_LOAD_IMAGE_COLOR);
   cv::Mat mat_gray_ref;
   cv::cvtColor(mat_color_ref, mat_gray_ref, CV_BGR2GRAY);
-
-  if (!mat_gray.data || !mat_gray_ref.data)
-  {
-    qCritical() << "ERROR invalid cv::Mat gray data\n";
-  }
-  cv::Mat mat = abs(mat_gray - mat_gray_ref);
-  if (!mat.data || mat.type() != CV_8UC1)
-  {
-    qCritical() << "ERROR invalid cv::Mat data\n";
-  }
-
-  std::vector<cv::Point2i> cam_points;
-  for (int i = 0; i < mat.rows; i++)
-  {
-    for (int j = 0; j < mat.cols; j++)
+  if( !mat_gray_ref.data )
     {
-      if ((int)mat.at<unsigned char>(i, j) > 50)
+    qCritical() << "ERROR invalid cv::Mat gray data\n";
+    }
+
+  cv::Mat pointcloud = cv::Mat( mat_gray_ref.rows, mat_gray_ref.cols, CV_32FC3 );
+
+  // imageTest is used to control which points have been used on the projector for the reconstruction
+  cv::Mat imageTest = cv::Mat::zeros( mat_gray_ref.rows, mat_gray_ref.cols, CV_8UC1 );
+
+  this->Projector.SetRow( 0 );
+  QString filename;
+  for( int num_image = 133; num_image <= 317; num_image++ )
+    {
+    this->Projector.SetRow( this->Projector.GetRow() + 10 );
+    filename = QString("C:\\Users\\Kitware\\Desktop\\Mode2-280fps\\fc2_save_2016-11-22-181440-0%1.bmp").arg(num_image);
+    if( filename.isEmpty() )
       {
-        cam_points.push_back(cv::Point2i(j, i));
+      return;
+      }
+    cv::Mat mat_color = cv::imread( qPrintable( filename ), CV_LOAD_IMAGE_COLOR );
+    cv::Mat mat_gray;
+    cv::cvtColor( mat_color, mat_gray, CV_BGR2GRAY );
+
+    if( !mat_gray.data)
+      {
+      qCritical() << "ERROR invalid cv::Mat gray data\n";
+      }
+    cv::Mat mat = abs( mat_gray - mat_gray_ref );
+    if( !mat.data || mat.type() != CV_8UC1 )
+      {
+      qCritical() << "ERROR invalid cv::Mat data\n";
+      }
+
+    //morphological opening (remove small objects from the foreground)
+    cv::erode( mat, mat, cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5 ) ) );
+    dilate( mat, mat, cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5 ) ) );
+
+    cv::Mat imTest = cv::Mat::zeros( mat.rows, mat.cols, CV_8UC1 );
+    std::vector<cv::Point2i> cam_points;
+    for( int i = 0; i < mat.rows; i++ )
+      {
+      for( int j = 0; j < mat.cols; j++ )
+        {
+        if( ( int )mat.at<unsigned char>( i, j ) > 50 )
+          {
+          cam_points.push_back( cv::Point2i( j, i ) );
+          imTest.at<unsigned char>( i, j ) = 255;
+          }
+        }
+      }
+    //cv::resize( imTest, imTest, cv::Size( 500, 500 ) );
+    //cv::imshow( "Image line 1", imTest );
+    //cv::waitKey( 0 );
+
+    // Computation of the point used to define the plane of the projector
+    cv::Mat inp2( 1, 1, CV_64FC2 );
+    cv::Mat outp2;
+    cv::Point3d w2, v2;
+    // to image camera coordinates
+    //std::cout << "row : " << this->Projector.GetRow() << std::endl;
+    inp2.at<cv::Vec2d>( 0, 0 ) = cv::Vec2d( 0, this->Projector.GetRow() );
+    cv::undistortPoints( inp2, outp2, this->Calib.Proj_K, this->Calib.Proj_kc );
+    assert( outp2.type() == CV_64FC2 && outp2.rows == 1 && outp2.cols == 1 );
+    const cv::Vec2d & outvec2 = outp2.at<cv::Vec2d>( 0, 0 );
+    cv::Point3d u2( outvec2[ 0 ], outvec2[ 1 ], 70.0 );
+    //to world coordinates
+    w2 = cv::Point3d( cv::Mat( this->Calib.R.t()*( cv::Mat( u2 ) - this->Calib.T ) ) );
+    // world rays = normal vector
+    //v2 = cv::Point3d( cv::Mat( this->Calib.R.t()*cv::Mat( u2 ) ) );
+    v2 = u2;
+
+    //cv::Mat mat_w2 = this->Calib.R.t()*( cv::Mat( u2 ) - this->Calib.T );
+    //cv::Vec3f vec = cv::Vec3f( mat_w2 );
+    //pointcloud.at<cv::Vec3f>( 1, num_image ) = vec;
+
+    double distance;
+    cv::Point3d p;
+    std::vector<cv::Point2i>::iterator it_cam = cam_points.begin();
+    cv::Mat inp1( 1, 1, CV_64FC2 );
+    cv::Mat outp1;
+    cv::Point3d w1, v1;
+    for( it_cam; it_cam != cam_points.end(); ++it_cam )
+      {
+      //to image camera coordinates
+      inp1.at<cv::Vec2d>( 0, 0 ) = cv::Vec2d( it_cam->x, it_cam->y );
+      cv::undistortPoints( inp1, outp1, this->Calib.Cam_K, this->Calib.Cam_kc );
+      assert( outp1.type() == CV_64FC2 && outp1.rows == 1 && outp1.cols == 1 );
+      const cv::Vec2d & outvec1 = outp1.at<cv::Vec2d>( 0, 0 );
+      cv::Point3d u1( outvec1[ 0 ], outvec1[ 1 ], 70.0 );
+      //to world coordinates
+      w1 = u1;
+      //world rays
+      v1 = w1;
+
+      cv::Point3d p_proj = { 0,0,0 };
+      p = approximate_ray_plane_intersection( this->Calib.R.t(), this->Calib.T, v1, w1, v2, w2, &distance );
+
+      cv::Vec3f & cloud_point = pointcloud.at<cv::Vec3f>( ( *it_cam ).y, ( *it_cam ).x );
+      cloud_point[ 0 ] = p.x;
+      cloud_point[ 1 ] = p.y;
+      cloud_point[ 2 ] = p.z;
+      imageTest.at<unsigned char>( ( *it_cam ).y, ( *it_cam ).x ) = 255;
       }
     }
-  }
-
-  cv::Mat pointcloud = cv::Mat(mat.rows, mat.cols, CV_32FC3);
-  // imageTest is used to control which points have been used on the projector for the reconstruction
-  cv::Mat imageTest = cv::Mat::zeros( mat.rows, mat.cols, CV_8UC1 );
-
-  // Computation of the point used to define the plane of the projector
-  cv::Mat inp2(1, 1, CV_64FC2);
-  cv::Mat outp2;
-  cv::Point3d w2;
-  // to image camera coordinates
-  inp2.at<cv::Vec2d>( 0, 0 ) = cv::Vec2d( 1, this->Projector.GetRow() );
-  cv::undistortPoints( inp2, outp2, this->Calib.Proj_K, this->Calib.Proj_kc );
-  assert( outp2.type() == CV_64FC2 && outp2.rows == 1 && outp2.cols == 1 );
-  const cv::Vec2d & outvec2 = outp2.at<cv::Vec2d>( 0, 0 );
-  cv::Point3d u2( outvec2[ 0 ], outvec2[ 1 ], 1.0 );
-  //to world coordinates
-  w2 = cv::Point3d( cv::Mat( this->Calib.R.t()*( cv::Mat( u2 ) - this->Calib.T ) ) );
-
-  double distance;
-  cv::Point3d p;
-  std::vector<cv::Point2i>::iterator it_cam = cam_points.begin();
-  cv::Mat inp1(1, 1, CV_64FC2);
-  cv::Mat outp1;
-  cv::Point3d w1, v1;
-  for (it_cam; it_cam != cam_points.end(); ++it_cam)
-  {
-    //to image camera coordinates
-    inp1.at<cv::Vec2d>(0, 0) = cv::Vec2d(it_cam->x, it_cam->y);
-    cv::undistortPoints(inp1, outp1, this->Calib.Cam_K, this->Calib.Cam_kc);
-    assert(outp1.type() == CV_64FC2 && outp1.rows == 1 && outp1.cols == 1);
-    const cv::Vec2d & outvec1 = outp1.at<cv::Vec2d>(0, 0);
-    cv::Point3d u1(outvec1[0], outvec1[1], 1.0);
-    //to world coordinates
-    w1 = u1;
-    //world rays
-    v1 = w1;
-
-    cv::Point2d p_proj = { 0,0 };
-    p = approximate_ray_plane_intersection( this->Calib.R.t(), this->Calib.T, v1, w1, w2, &p_proj, &distance );
-    cv::Vec3f & cloud_point = pointcloud.at<cv::Vec3f>((*it_cam).y, (*it_cam).x);
-    cloud_point[0] = p.x;
-    cloud_point[1] = p.y;
-    cloud_point[2] = p.z;
-    imageTest.at<unsigned char>( ( *it_cam ).y, ( *it_cam ).x ) = 255;
-  }
+  //cv::Mat vecMat = -( this->Calib.R.t() * this->Calib.T );
+  //cv::Vec3f vec = cv::Vec3f( vecMat );
+  //pointcloud.at<cv::Vec3f>( 1, 1 ) = vec;
   if (!pointcloud.data)
   {
     qCritical() << "ERROR, reconstruction failed\n";
   }
   cv::resize(imageTest, imageTest, cv::Size(500, 500));
-  cv::imshow("Image line", imageTest);
+  cv::imshow("Image line 2", imageTest);
   cv::waitKey(0);
 
   QString name = "pointcloud";
@@ -390,21 +423,28 @@ cv::Point3d MainWindow::approximate_ray_intersection(const cv::Point3d & v1, con
 }
 
 cv::Point3d MainWindow::approximate_ray_plane_intersection( const cv::Mat & Rt, const cv::Mat & T,
-  const cv::Point3d & vc, const cv::Point3d & qc, const cv::Point3d & qp, cv::Point2d * p_proj, double * distance )
+  const cv::Point3d & vc, const cv::Point3d & qc, const cv::Point3d & vp, const cv::Point3d & qp, double * distance )
   {
   cv::Mat vcMat = cv::Mat( vc );
   cv::Mat qcMat = cv::Mat( qc );
+  cv::Mat vpMat = cv::Mat( vp );
   cv::Mat qpMat = cv::Mat( qp );
 
-  cv::Mat num = (Rt*qpMat).t() * ( ( -Rt*T ) - qcMat);
-  cv::Mat denum = (Rt*qpMat).t()*vcMat;
+  //cv::Mat num = (Rt*qpMat).t() * ( ( -Rt*T ) - qcMat);
+  //cv::Mat denum = (Rt*qpMat).t()*vcMat;
+  cv::Mat num = vpMat.t() * ( qpMat - qcMat );
+  cv::Mat denum = vpMat.t()*vcMat;
   double lambda = num.at<double>(0,0) / denum.at<double>(0,0);
 
   cv::Point3d p = lambda*vc + qc;
 
   //cv::Mat p_projMat = ( Rt*qpMat ).t() * ( -Rt*T ) / ( Rt*qpMat ).t();
-  //std::cout << "p_projMat : " << p_projMat << std::endl;
-  //*p_proj = cv::Point2d (p_projMat);
+  //cv::Mat p_projMat = ( Rt*qpMat ).t() * qpMat / ( Rt*qpMat ).t();
+  //*p_proj = cv::Point3d (p_projMat);
+  //std::cout << "p : " << p << std::endl;
+  //std::cout << "p_proj : " << p_proj << std::endl;
+  //cv::Mat pMat = cv::Mat( p );
+  //std::cout << "result : " << ( Rt*qpMat ).t() * ( pMat - ( -Rt*T ) ) << std::endl;
 
   return p;
   }
