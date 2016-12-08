@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
   std::cout<<"Draw the window"<<std::endl;
   window.show();
 
-  CalibrationData calib;
+  /*CalibrationData calib;
   QString calibrationFile = "../calibration-small-stick-rotation.yml";
 
   bool error = calib.LoadCalibration(calibrationFile);
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     std::cout << "Impossible to read the calibration file" << std::endl;
   }
   //calib.display(std::cout);
-
+  */
   std::cout<<"Start the main application"<<std::endl;
   return app.exec();
 

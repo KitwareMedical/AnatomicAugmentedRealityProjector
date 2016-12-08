@@ -1,6 +1,6 @@
 #include "io_util.hpp"
 #include "MainWindow.hpp"
-#include "ui_mainwindow.h"
+#include "ui_MainWindow.h"
 #include "moc_MainWindow.cpp"
 #include "moc_ProjectorWidget.cpp"
 
@@ -17,7 +17,7 @@
 #include <QFileDialog>
 
 #include <iostream>
-
+#include <map>
 
 MainWindow::MainWindow(QWidget *parent) :
   QMainWindow(parent),
@@ -34,6 +34,9 @@ MainWindow::MainWindow(QWidget *parent) :
   connect(ui->proj_row, SIGNAL(valueChanged(int)), this, SLOT(SetProjectorLineRow()));
   connect(ui->cam_framerate, SIGNAL(valueChanged(double)), this, SLOT(SetCameraFrameRate()));
   connect(ui->cam_nbimages, SIGNAL(valueChanged(int)), this, SLOT(SetCameraNbImages()));
+  connect( ui->proj_blue, SIGNAL( valueChanged( int ) ), this, SLOT( SetProjectorBlueColor() ) );
+  connect( ui->proj_green, SIGNAL( valueChanged( int ) ), this, SLOT( SetProjectorGreenColor() ) );
+  connect( ui->proj_red, SIGNAL( valueChanged( int ) ), this, SLOT( SetProjectorRedColor() ) );
 
 
   this->SetCameraFrameRate();
@@ -44,9 +47,18 @@ MainWindow::MainWindow(QWidget *parent) :
   this->timer->setInterval(5);
   this->connect(timer, SIGNAL(timeout()), SLOT(DisplayCamera()));
 
-  QString calibrationFile = "C:\\Camera_Projector_Calibration\\CameraProjector\\calibration.yml";
-  this->Calib.LoadCalibration(calibrationFile);
-  this->Calib.Display();
+  CalibrationData calib;
+  QString calibrationFile = "C:\\Camera_Projector_Calibration\\CameraProjector\\calibration-small-stick-rotation.yml";
+
+  bool error = this->Calib.LoadCalibration( calibrationFile );
+  if( error == false )
+    {
+    std::cout << "Impossible to read the calibration file" << std::endl;
+    }
+  else
+    {
+    this->Calib.Display();
+    }
 }
 
 MainWindow::~MainWindow()
@@ -146,6 +158,37 @@ void MainWindow::on_proj_display_clicked()
   disconnect(&(this->Projector), SIGNAL(new_image(QPixmap)), this, SLOT(_on_new_projector_image(QPixmap)));
 }
 
+void MainWindow::on_proj_displayColor_clicked()
+  {
+  cv::Mat mat = this->Projector.CreateColoredImage(this->Projector.GetBlueColor(), this->Projector.GetGreenColor(), this->Projector.GetRedColor());
+  if( !mat.data )
+    {
+    std::cout << "Could not open or find the image" << std::endl;
+    return;
+    }
+
+  QPixmap pixmap = QPixmap::fromImage( cvMatToQImage( mat ) );
+  this->Projector.SetPixmap( pixmap );
+
+  connect( &( this->Projector ), SIGNAL( new_image( QPixmap ) ), this, SLOT( _on_new_projector_image( QPixmap ) ) );
+
+  this->Projector.start();
+
+  //disconnect projector display signal
+  disconnect( &( this->Projector ), SIGNAL( new_image( QPixmap ) ), this, SLOT( _on_new_projector_image( QPixmap ) ) );
+  }
+
+void MainWindow::on_cam_display_clicked()
+{
+  CamInput.Run();
+  this->timer->start();
+}
+
+void MainWindow::on_cam_record_clicked()
+{
+  this->CamInput.RecordImages();
+}
+
 void MainWindow::DisplayCamera()
 {
   QGraphicsScene *scene = new QGraphicsScene(this);
@@ -167,15 +210,9 @@ void MainWindow::DisplayCamera()
   }*/
 }
 
-void MainWindow::on_cam_display_clicked()
+void MainWindow::_on_new_projector_image(QPixmap pixmap)
 {
-  CamInput.Run();
-  this->timer->start();
-}
-
-void MainWindow::on_cam_record_clicked()
-{
-  this->CamInput.RecordImages();
+  this->Projector.SetPixmap(pixmap);
 }
 
 void MainWindow::SetProjectorHeight()
@@ -200,85 +237,205 @@ void MainWindow::SetProjectorLineRow()
 
 void MainWindow::SetCameraFrameRate()
 {
-  CamInput.SetCameraFrameRate(ui->cam_framerate->value());
+  this->CamInput.SetCameraFrameRate(ui->cam_framerate->value());
 }
 
 void MainWindow::SetCameraNbImages()
 {
-  CamInput.SetNbImages(ui->cam_nbimages->value());
+  this->CamInput.SetNbImages(ui->cam_nbimages->value());
 }
 
-void MainWindow::_on_new_projector_image(QPixmap pixmap)
+void MainWindow::SetProjectorBlueColor()
 {
-  this->Projector.SetPixmap(pixmap);
+  this->Projector.SetBlueColor( ui->proj_blue->value() );
+}
+
+void MainWindow::SetProjectorGreenColor()
+{
+  this->Projector.SetGreenColor( ui->proj_green->value() );
+}
+
+void MainWindow::SetProjectorRedColor()
+{
+  this->Projector.SetRedColor( ui->proj_red->value() );
 }
 
 void MainWindow::on_analyze_clicked()
-{
-  // Substract 2 images to keep only the line illuminated by the projector
-  QString dir = "C:\\Users\\Kitware\\Desktop\\Mode2-280fps\\fc2_save_2016-11-22-181440-0133.bmp";
-  //QString filename = QFileDialog::getOpenFileName(this, "Open decoded files", dir);
-  if (dir.isEmpty())
   {
-    return;
-  }
-  cv::Mat mat_color_ref = cv::imread(qPrintable(dir), CV_LOAD_IMAGE_COLOR);
-  cv::Mat mat_gray_ref;
-  cv::cvtColor(mat_color_ref, mat_gray_ref, CV_BGR2GRAY);
-  if( !mat_gray_ref.data )
+    // Substract 2 images to keep only the line illuminated by the projector
+  QString filename_ref = "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-skull-unordered\\fc2_save_2016-12-05-114506-0012.bmp";
+  if( filename_ref.isEmpty() )
     {
-    qCritical() << "ERROR invalid cv::Mat gray data\n";
+    return;
     }
-
-  cv::Mat pointcloud = cv::Mat( mat_gray_ref.rows, mat_gray_ref.cols, CV_32FC3 );
+  cv::Mat mat_color_ref = cv::imread( qPrintable( filename_ref ), CV_LOAD_IMAGE_COLOR );
+  cv::Mat pointcloud = cv::Mat( mat_color_ref.rows, mat_color_ref.cols, CV_32FC3 );
+  cv::Mat pointcloud_colors = cv::Mat( mat_color_ref.rows, mat_color_ref.cols, CV_8UC3 );
 
   // imageTest is used to control which points have been used on the projector for the reconstruction
-  cv::Mat imageTest = cv::Mat::zeros( mat_gray_ref.rows, mat_gray_ref.cols, CV_8UC1 );
+  cv::Mat imageTest = cv::Mat::zeros( mat_color_ref.rows, mat_color_ref.cols, CV_8UC1 );
 
   this->Projector.SetRow( 0 );
   QString filename;
-  for( int num_image = 133; num_image <= 317; num_image++ )
+  int row = 0;
+  int max_row = 0, min_row = mat_color_ref.rows;
+  /************************Find the top and bottom lines of te projecter**************************/
+  for( int num_image = 0; num_image <= 399; num_image++ )
     {
-    this->Projector.SetRow( this->Projector.GetRow() + 10 );
-    filename = QString("C:\\Users\\Kitware\\Desktop\\Mode2-280fps\\fc2_save_2016-11-22-181440-0%1.bmp").arg(num_image);
+    if( num_image < 10 )
+      {
+      filename = QString( "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-skull-unordered\\fc2_save_2016-12-05-114506-000%1.bmp" ).arg( num_image );
+      }
+    else if( num_image < 100 )
+      {
+      filename = QString( "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-skull-unordered\\fc2_save_2016-12-05-114506-00%1.bmp" ).arg( num_image );
+      }
+    else
+      {
+      filename = QString( "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-skull-unordered\\fc2_save_2016-12-05-114506-0%1.bmp" ).arg( num_image );
+      }
     if( filename.isEmpty() )
       {
       return;
       }
     cv::Mat mat_color = cv::imread( qPrintable( filename ), CV_LOAD_IMAGE_COLOR );
-    cv::Mat mat_gray;
-    cv::cvtColor( mat_color, mat_gray, CV_BGR2GRAY );
+    cv::Mat mat;
+    cv::subtract( mat_color, mat_color_ref, mat );
 
-    if( !mat_gray.data)
-      {
-      qCritical() << "ERROR invalid cv::Mat gray data\n";
-      }
-    cv::Mat mat = abs( mat_gray - mat_gray_ref );
-    if( !mat.data || mat.type() != CV_8UC1 )
+    if( !mat.data || mat.type() != CV_8UC3 )
       {
       qCritical() << "ERROR invalid cv::Mat data\n";
       }
+    //morphological opening (remove small objects from the foreground)
+    cv::erode( mat, mat, cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5 ) ) );
+    dilate( mat, mat, cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5 ) ) );
+    //Convert the captured frame from BGR to HSV
+    cv::Mat mat_HSV;
+    cv::cvtColor( mat, mat_HSV, cv::COLOR_BGR2HSV );
+
+    cv::Vec3b pixel_HSV;
+    int max_i = 0;
+    int min_i = mat_HSV.rows;
+    bool first = true;
+    for( int i = 0; i < mat_HSV.rows; i++ )
+      {
+      for( int j = 0; j < mat_HSV.cols; j++ )
+        {
+        pixel_HSV = mat_HSV.at< cv::Vec3b >( i, j );
+        if( pixel_HSV.val[ 2 ] > 90 )
+          {
+          if( first == true )
+            {
+            min_i = i;
+            first = false;
+            }
+          max_i = i;
+          //imageTest.at<unsigned char>( i, j ) = 255;
+          }
+        }
+      }
+    if( max_i > max_row )
+      {
+      max_row = max_i;
+      }
+    if( min_i < min_row )
+      {
+      min_row = min_i;
+      }
+    }
+    /***********************3D Reconstruction of other lines****************************/
+  filename_ref = "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-skull-unordered\\fc2_save_2016-12-05-114506-0112.bmp";
+  //filename_ref = "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-angle-unordered-1000\\fc2_save_2016-12-05-144727-0001.bmp";
+  if( filename_ref.isEmpty() )
+    {
+    return;
+    }
+  mat_color_ref = cv::imread( qPrintable( filename_ref ), CV_LOAD_IMAGE_COLOR );
+  for( int num_image = 18; num_image <= 195; num_image++ )
+    {
+    if( num_image < 10 )
+      {
+      //filename = QString( "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-angle-unordered-1000\\fc2_save_2016-12-05-144727-000%1.bmp" ).arg( num_image );
+      filename = QString( "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-skull-unordered\\fc2_save_2016-12-05-114506-000%1.bmp" ).arg( num_image );
+      }
+    else if( num_image < 100 )
+      {
+      //filename = QString( "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-angle-unordered-1000\\fc2_save_2016-12-05-144727-00%1.bmp" ).arg( num_image );
+      filename = QString( "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-skull-unordered\\fc2_save_2016-12-05-114506-00%1.bmp" ).arg( num_image );
+      }
+    else
+      {
+      //filename = QString( "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-angle-unordered-1000\\fc2_save_2016-12-05-144727-0%1.bmp" ).arg( num_image );
+      filename = QString( "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-skull-unordered\\fc2_save_2016-12-05-114506-0%1.bmp" ).arg( num_image );
+      }
+    if( filename.isEmpty() )
+      {
+      return;
+      }
+    cv::Mat mat_color = cv::imread( qPrintable( filename ), CV_LOAD_IMAGE_COLOR );
+    if( !mat_color.data || mat_color.type() != CV_8UC3 )
+      {
+      qCritical() << "ERROR invalid cv::Mat data\n";
+      return;
+      }
+    cv::Mat mat;
+    cv::subtract( mat_color, mat_color_ref, mat );
+
+    if( !mat.data || mat.type() != CV_8UC3 )
+      {
+      qCritical() << "ERROR invalid cv::Mat data\n";
+      }
+    //cv::imshow( "Image before preprocessing", mat );
 
     //morphological opening (remove small objects from the foreground)
     cv::erode( mat, mat, cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5 ) ) );
     dilate( mat, mat, cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5 ) ) );
 
-    cv::Mat imTest = cv::Mat::zeros( mat.rows, mat.cols, CV_8UC1 );
+    //cv::imshow( "Image after background substraction and preprocessing", mat );
+    //cv::waitKey( 0 );
+
+    //Convert the captured frame from BGR to HSV
+    cv::Mat mat_HSV;
+    cv::cvtColor( mat, mat_HSV, cv::COLOR_BGR2HSV );
+
     std::vector<cv::Point2i> cam_points;
-    for( int i = 0; i < mat.rows; i++ )
+    cv::Vec3b pixel_HSV;
+    bool first = true;
+    int current_row_min = mat_HSV.rows;
+    int current_row_max = 0;
+    int current_row = 0;
+    for( int i = 0; i < mat_HSV.rows; i++ )
       {
-      for( int j = 0; j < mat.cols; j++ )
+      for( int j = 0; j < mat_HSV.cols; j++ )
         {
-        if( ( int )mat.at<unsigned char>( i, j ) > 50 )
+        pixel_HSV = mat_HSV.at< cv::Vec3b >( i, j );
+        if( pixel_HSV.val[ 2 ] > 110 )
           {
           cam_points.push_back( cv::Point2i( j, i ) );
-          imTest.at<unsigned char>( i, j ) = 255;
+          imageTest.at<unsigned char>( i, j ) = 255;
+          /*current_row_max = i;
+          if( first == true )
+            {
+            current_row_min = i;
+            first = false;
+            }*/
+          if( j > 865 )
+            {
+            current_row = i;
+            }
           }
         }
       }
-    //cv::resize( imTest, imTest, cv::Size( 500, 500 ) );
-    //cv::imshow( "Image line 1", imTest );
-    //cv::waitKey( 0 );
+    //int current_row = ( current_row_max + current_row_min ) / 2;
+    row = ( current_row - min_row )*this->Projector.GetHeight() / ( max_row - min_row );
+    //std::cout << row << std::endl;
+    if( row <= 0 || row > this->Projector.GetHeight() )
+      {
+      std::cout << "The computed row is not valid. The line is skipped." << row << std::endl;
+      continue; // We skip the line
+      }
+
+    this->Projector.SetRow( row );
 
     // Computation of the point used to define the plane of the projector
     cv::Mat inp2( 1, 1, CV_64FC2 );
@@ -297,20 +454,16 @@ void MainWindow::on_analyze_clicked()
     //v2 = cv::Point3d( cv::Mat( this->Calib.R.t()*cv::Mat( u2 ) ) );
     v2 = u2;
 
-    //cv::Mat mat_w2 = this->Calib.R.t()*( cv::Mat( u2 ) - this->Calib.T );
-    //cv::Vec3f vec = cv::Vec3f( mat_w2 );
-    //pointcloud.at<cv::Vec3f>( 1, num_image ) = vec;
-
     double distance;
     cv::Point3d p;
-    std::vector<cv::Point2i>::iterator it_cam = cam_points.begin();
+    std::vector<cv::Point2i>::iterator it_cam_points = cam_points.begin();
     cv::Mat inp1( 1, 1, CV_64FC2 );
     cv::Mat outp1;
     cv::Point3d w1, v1;
-    for( it_cam; it_cam != cam_points.end(); ++it_cam )
+    for( it_cam_points; it_cam_points != cam_points.end(); ++it_cam_points )
       {
       //to image camera coordinates
-      inp1.at<cv::Vec2d>( 0, 0 ) = cv::Vec2d( it_cam->x, it_cam->y );
+      inp1.at<cv::Vec2d>( 0, 0 ) = cv::Vec2d( it_cam_points->x, it_cam_points->y );
       cv::undistortPoints( inp1, outp1, this->Calib.Cam_K, this->Calib.Cam_kc );
       assert( outp1.type() == CV_64FC2 && outp1.rows == 1 && outp1.cols == 1 );
       const cv::Vec2d & outvec1 = outp1.at<cv::Vec2d>( 0, 0 );
@@ -323,39 +476,54 @@ void MainWindow::on_analyze_clicked()
       cv::Point3d p_proj = { 0,0,0 };
       p = approximate_ray_plane_intersection( this->Calib.R.t(), this->Calib.T, v1, w1, v2, w2, &distance );
 
-      cv::Vec3f & cloud_point = pointcloud.at<cv::Vec3f>( ( *it_cam ).y, ( *it_cam ).x );
+      cv::Vec3f & cloud_point = pointcloud.at<cv::Vec3f>( ( *it_cam_points ).y, ( *it_cam_points ).x );
       cloud_point[ 0 ] = p.x;
       cloud_point[ 1 ] = p.y;
       cloud_point[ 2 ] = p.z;
-      imageTest.at<unsigned char>( ( *it_cam ).y, ( *it_cam ).x ) = 255;
+
+      const cv::Vec3b & vec = mat.at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x );
+      cv::Vec3b & cloud_color = pointcloud_colors.at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x );
+      cloud_color[ 0 ] = vec[ 0 ];
+      cloud_color[ 1 ] = vec[ 1 ];
+      cloud_color[ 2 ] = vec[ 2 ];
+
+      imageTest.at<unsigned char>( ( *it_cam_points ).y, ( *it_cam_points ).x ) = 255;
       }
     }
-  //cv::Mat vecMat = -( this->Calib.R.t() * this->Calib.T );
-  //cv::Vec3f vec = cv::Vec3f( vecMat );
-  //pointcloud.at<cv::Vec3f>( 1, 1 ) = vec;
-  if (!pointcloud.data)
-  {
-    qCritical() << "ERROR, reconstruction failed\n";
-  }
-  cv::resize(imageTest, imageTest, cv::Size(500, 500));
-  cv::imshow("Image line 2", imageTest);
-  cv::waitKey(0);
+    //cv::Mat vecMat = -( this->Calib.R.t() * this->Calib.T );
+    //cv::Vec3f vec = cv::Vec3f( vecMat );
+    //pointcloud.at<cv::Vec3f>( 1, 1 ) = vec;
+    if( !pointcloud.data )
+      {
+      qCritical() << "ERROR, reconstruction failed\n";
+      }
+    //cv::resize(imageTest, imageTest, cv::Size(500, 500));
+    cv::imshow( "Image line 2", imageTest );
+    //cv::waitKey(0);
 
-  QString name = "pointcloud";
-  filename = QFileDialog::getSaveFileName(this, "Save pointcloud", name + ".ply", "Pointclouds (*.ply)");
-  if (!filename.isEmpty())
-  {
-    std::cout << "Saving the pointcloud" << std::endl;
-    bool binary = false;
-    unsigned ply_flags = io_util::PlyPoints | (binary ? io_util::PlyBinary : 0);
-    bool success = io_util::write_ply(filename.toStdString(), pointcloud, ply_flags);
-    if (success == false)
-    {
-      qCritical() << "ERROR, saving the pointcloud failed\n";
-      return;
-    }
+    cv::Mat Mat_minmaxRow = cv::Mat::zeros( mat_color_ref.rows, mat_color_ref.cols, CV_8UC1 );
+    for( int col = 0; col < Mat_minmaxRow.cols; col++ )
+      {
+      Mat_minmaxRow.at<unsigned char>( max_row, col ) = 255;
+      Mat_minmaxRow.at<unsigned char>( min_row, col ) = 255;
+      }
+    cv::imshow( "Max Row", Mat_minmaxRow );
+    cv::waitKey( 0 );
+
+    QString name = "pointcloud";
+    filename = QFileDialog::getSaveFileName( this, "Save pointcloud", name + ".ply", "Pointclouds (*.ply)" );
+    if( !filename.isEmpty() )
+      {
+      std::cout << "Saving the pointcloud" << std::endl;
+      bool binary = false;
+      bool success = io_util::write_ply( filename.toStdString(), pointcloud, pointcloud_colors );
+      if( success == false )
+        {
+        qCritical() << "ERROR, saving the pointcloud failed\n";
+        return;
+        }
+      }
   }
-}
 
 void MainWindow::triangulate_stereo(const cv::Mat & K1, const cv::Mat & kc1, const cv::Mat & K2, const cv::Mat & kc2,
   const cv::Mat & Rt, const cv::Mat & T, const cv::Point2i & p1, const cv::Point2i & p2,
@@ -447,4 +615,38 @@ cv::Point3d MainWindow::approximate_ray_plane_intersection( const cv::Mat & Rt, 
   //std::cout << "result : " << ( Rt*qpMat ).t() * ( pMat - ( -Rt*T ) ) << std::endl;
 
   return p;
+  }
+
+int MainWindow::DecodeColor( cv::Mat mat )
+  {
+  //Convert the captured frame from BGR to HSV
+  cv::Mat mat_HSV;
+  cv::cvtColor( mat, mat_HSV, cv::COLOR_BGR2HSV );
+
+  // Selecting the not black points and finding the average color of the line
+  cv::Mat essai = cv::Mat::zeros( mat.rows, mat.cols, CV_8UC3 );
+  int valid_points = 0;
+  int sum = 0;
+  for( int j = 0; j < mat_HSV.cols; j++ )
+    {
+    for( int i = 0; i < mat_HSV.rows; i++ )
+      {
+      if( mat_HSV.at< cv::Vec3b >( i, j ).val[ 2 ] > 90 )
+        {
+        essai.at< cv::Vec3b >( i, j ) = mat.at< cv::Vec3b >( i, j );
+        sum += mat_HSV.at< cv::Vec3b >( i, j ).val[ 0 ];
+        valid_points++;
+        }
+      }
+    }
+  double color = sum / valid_points;
+  if( color >= 180 || color < 0 )
+    {
+    std::cout << "Error with the decoded color." << std::endl;
+    return 0;
+    }
+  int row = 1080 * color / 180;
+  //cv::imshow( "Selected points", essai );
+  //cv::waitKey( 0 );
+  return row;
   }

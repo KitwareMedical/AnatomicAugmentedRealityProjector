@@ -20,6 +20,7 @@ public:
 
   cv::Mat CreateLineImage();
   cv::Mat CreatePattern();
+  cv::Mat CreateColoredImage( int blue, int green, int red );
   std::vector<cv::Point2i> GetCoordLine(cv::Mat image);
 
   QPixmap GetPixmap() const { return this->Pixmap; };
@@ -27,11 +28,17 @@ public:
   int GetHeight() const { return this->Height; };
   int GetLineThickness() const { return this->LineThickness; };
   int GetRow() const { return this->Row; };
+  int GetBlueColor() { return this->BlueColor; };
+  int GetGreenColor() { return this->GreenColor; };
+  int GetRedColor() { return this->RedColor; };
   void SetPixmap(QPixmap image) { this->Pixmap = image; };
   void SetWidth(int x) { this->Width = x; };
   void SetHeight(int y) { this->Height = y; };
   void SetLineThickness(int thickness) { this->LineThickness = thickness; };
   void SetRow(int r) { this->Row = r; };
+  void SetBlueColor( int blue ) { this->BlueColor = blue; };
+  void SetGreenColor( int green ) { this->GreenColor = green; };
+  void SetRedColor( int red ) { this->RedColor = red; };
 
   void start();
 
@@ -47,7 +54,9 @@ private:
   int Width;
   int LineThickness;
   int Row;
-
+  int BlueColor;
+  int GreenColor;
+  int RedColor;
 };
 
 #endif  /* __PROJECTOR_HPP__ */

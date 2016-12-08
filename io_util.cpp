@@ -2,21 +2,25 @@
 #include <iostream>
 #include <fstream>
 
-bool io_util::write_ply(const std::string & filename, cv::Mat const& pointcloud, unsigned flags)
+bool io_util::write_ply(const std::string & filename, cv::Mat const& pointcloud_points, cv::Mat const& pointcloud_colors)
 {
-  if (!pointcloud.data)
+  if (!pointcloud_points.data
+    || ( pointcloud_colors.data && pointcloud_colors.rows != pointcloud_points.rows && pointcloud_colors.cols != pointcloud_points.cols ))
   {
     return false;
   }
 
-  bool binary = (flags&PlyBinary);
+  bool binary = false;
+  bool colors = pointcloud_colors.data;
+
   std::vector<int> points_index;
-  points_index.reserve(pointcloud.total());
-  std::cout << "nb_points total : " << pointcloud.total() << std::endl;
+  points_index.reserve( pointcloud_points.total());
+  std::cout << "nb_points total : " << pointcloud_points.total() << std::endl;
 
-  const cv::Vec3f * points_data = pointcloud.ptr<cv::Vec3f>(0);
+  const cv::Vec3f * points_data = pointcloud_points.ptr<cv::Vec3f>(0);
+  const cv::Vec3b * colors_data = ( colors ? pointcloud_colors.ptr<cv::Vec3b>( 0 ) : NULL );
 
-  int total = static_cast<int>(pointcloud.total());
+  int total = static_cast<int>( pointcloud_points.total());
   for (int i = 0; i<total; i++)
   {
     //if (!sl::INVALID(points_data[i]) && (!normals_data || !sl::INVALID(normals_data[i])))
@@ -44,16 +48,23 @@ bool io_util::write_ply(const std::string & filename, cv::Mat const& pointcloud,
   }
   const char * format_header = (binary ? "binary_little_endian 1.0" : "ascii 1.0");
   outfile << "ply" << std::endl
-    << "format " << format_header << std::endl
-    << "comment scan3d-capture generated" << std::endl
-    << "element vertex " << j << std::endl
-    << "property float x" << std::endl
-    << "property float y" << std::endl
-    << "property float z" << std::endl;
+          << "format " << format_header << std::endl
+          << "comment scan3d-capture generated" << std::endl
+          << "element vertex " << j << std::endl
+          << "property float x" << std::endl
+          << "property float y" << std::endl
+          << "property float z" << std::endl;
+  if( colors )
+    {
+    outfile << "property uchar red" << std::endl
+            << "property uchar green" << std::endl
+            << "property uchar blue" << std::endl
+            << "property uchar alpha" << std::endl;
+    }
   
   outfile << "element face 0" << std::endl
-    << "property list uchar int vertex_indices" << std::endl
-    << "end_header" << std::endl;
+          << "property list uchar int vertex_indices" << std::endl
+          << "end_header" << std::endl;
 
   for (std::vector<int>::const_iterator iter = points_index.begin(); iter != points_index.end(); iter++)
   {
@@ -66,10 +77,25 @@ bool io_util::write_ply(const std::string & filename, cv::Mat const& pointcloud,
         outfile.write(reinterpret_cast<const char *>(&(p[0])), sizeof(float));
         outfile.write(reinterpret_cast<const char *>(&(p[1])), sizeof(float));
         outfile.write(reinterpret_cast<const char *>(&(p[2])), sizeof(float));
+
+        if( colors )
+          {
+          cv::Vec3b const& c = colors_data[ *iter ];
+          const unsigned char a = 255U;
+          outfile.write( reinterpret_cast<const char *>( &( c[ 2 ] ) ), sizeof( unsigned char ) );
+          outfile.write( reinterpret_cast<const char *>( &( c[ 1 ] ) ), sizeof( unsigned char ) );
+          outfile.write( reinterpret_cast<const char *>( &( c[ 0 ] ) ), sizeof( unsigned char ) );
+          outfile.write( reinterpret_cast<const char *>( &a ), sizeof( unsigned char ) );
+          }
       }
       else
       {
         outfile << p[0] << " " << p[1] << " " << p[2];
+        if( colors )
+          {
+          cv::Vec3b const& c = colors_data[ *iter ];
+          outfile << " " << static_cast<int>( c[ 2 ] ) << " " << static_cast<int>( c[ 1 ] ) << " " << static_cast<int>( c[ 0 ] ) << " 255";
+          }
         outfile << std::endl;
       }
     }

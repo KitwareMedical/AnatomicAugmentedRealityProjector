@@ -1,6 +1,7 @@
 #include "ProjectorWidget.hpp"
 
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 #include <QApplication>
 #include <QDesktopWidget>
@@ -48,12 +49,21 @@ cv::Mat ProjectorWidget::CreatePattern()
   cv::Mat image = cv::Mat::zeros( this->Height, this->Width, CV_8UC3 );
   for( int j = 0; j < image.rows; j++ )
     {
+    float color = (j+1) * 180 / this->GetHeight();
+    float row = color*this->GetHeight() / 180;
+    std::cout << "color : " << color << " row : " << row << std::endl;
     for( int i = 0; i < image.cols; i++ )
       {
       image.at<cv::Vec3b>( j, i ) = { unsigned char(j*180/this->GetHeight()), 255, 255 };
       }
     }
   cv::cvtColor( image, image, cv::COLOR_HSV2BGR );
+  return image;
+  }
+
+cv::Mat ProjectorWidget::CreateColoredImage( int blue, int green, int red )
+  {
+  cv::Mat image = cv::Mat( this->Height, this->Width, CV_8UC3, { double(blue), double(green), double(red) } );
   return image;
   }
 

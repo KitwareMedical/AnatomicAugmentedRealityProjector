@@ -4,6 +4,8 @@ find_package(Qt5Concurrent REQUIRED)
 find_package(opencv REQUIRED)
 find_package(FlyCapture REQUIRED)
 
+qt5_wrap_ui( ui_files ${CameraProjector_SOURCE_DIR}/form/MainWindow.ui )
+
 set( source_files
   CalibrationData.cpp
   CalibrationData.hpp
@@ -18,10 +20,15 @@ set( source_files
   ProjectorWidget.hpp
   )
   
+#set( ui_files
+#  ${CameraProjector_SOURCE_DIR}/form/MainWindow.ui
+#  )
+
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} ${FLYCAPTURE_INCLUDE_DIR})
 
 add_executable( CameraProjector 
   ${source_files}
+  ${ui_files}
   )
 
 target_link_libraries( CameraProjector 
