@@ -112,7 +112,7 @@ bool CalibrationData::SaveCalibrationMatlab(QString const& filename)
   {
     return false;
   }
-  
+
   cv::Mat rvec;
   cv::Rodrigues(R, rvec);
   fprintf(fp,

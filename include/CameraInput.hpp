@@ -14,7 +14,7 @@ public :
   void Run();
   void SetCameraFrameRate(double framerate);
   double GetCameraFrameRate();
-  
+
   //void SetFrameRate(double frameRate) { this->FrameRate = frameRate; };
   void SetNbImages(int nbImages) { this->NbImages = nbImages; };
   //double GetFrameRate() const { return this->FrameRate; };
@@ -29,5 +29,5 @@ public :
 private :
   //double FrameRate;
   int NbImages;
-  
+
 };

@@ -61,7 +61,7 @@ bool io_util::write_ply(const std::string & filename, cv::Mat const& pointcloud_
             << "property uchar blue" << std::endl
             << "property uchar alpha" << std::endl;
     }
-  
+
   outfile << "element face 0" << std::endl
           << "property list uchar int vertex_indices" << std::endl
           << "end_header" << std::endl;
@@ -69,7 +69,7 @@ bool io_util::write_ply(const std::string & filename, cv::Mat const& pointcloud_
   for (std::vector<int>::const_iterator iter = points_index.begin(); iter != points_index.end(); iter++)
   {
     cv::Vec3f const& p = points_data[*iter];
-    // We only keep the points corresponding to the line we are reconstructing 
+    // We only keep the points corresponding to the line we are reconstructing
     if (p[2] > 0)
     {
       if (binary)

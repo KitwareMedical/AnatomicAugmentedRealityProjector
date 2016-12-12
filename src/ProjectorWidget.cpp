@@ -14,7 +14,7 @@ ProjectorWidget::ProjectorWidget(QWidget * parent, Qt::WindowFlags flags) :
   QWidget(parent, flags),
   Height(1080),
   Width(1920),
-  LineThickness(1), 
+  LineThickness(1),
   Row(100)
 {}
 
@@ -69,7 +69,7 @@ cv::Mat ProjectorWidget::CreateColoredImage( int blue, int green, int red )
 
 std::vector<cv::Point2i> ProjectorWidget::GetCoordLine(cv::Mat image)
 {
-  // TODO: condition on type of matrix 
+  // TODO: condition on type of matrix
   std::vector<cv::Point2i> coord;
   for (int i = 0; i < image.rows; i++)
   {

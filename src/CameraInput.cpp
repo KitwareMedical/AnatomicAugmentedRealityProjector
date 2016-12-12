@@ -32,7 +32,6 @@ CameraInput::~CameraInput()
   }
 }
 
-
 void CameraInput::Run()
 {
   Error error;
@@ -73,7 +72,7 @@ void CameraInput::Run()
   }
 
   //this->SetCameraFrameRate(this->FrameRate);
-  
+
   error = Camera.StartCapture();
   if (error == PGRERROR_ISOCH_BANDWIDTH_EXCEEDED)
   {
@@ -165,7 +164,7 @@ double CameraInput::GetCameraFrameRate()
   }
   return 0;
 }
-// Note : Check the returned value when calling the function 
+// Note : Check the returned value when calling the function
 
 void CameraInput::RecordImages()
 {
@@ -200,7 +199,7 @@ void CameraInput::RecordImages()
       error.PrintErrorTrace();
       return;
     }
-    
+
     // Get the camera information
     CameraInfo camInfo;
     error = this->Camera.GetCameraInfo(&camInfo);

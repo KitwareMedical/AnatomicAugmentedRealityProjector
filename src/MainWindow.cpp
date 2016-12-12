@@ -1,8 +1,8 @@
 #include "io_util.hpp"
 #include "MainWindow.hpp"
 #include "ui_MainWindow.h"
-#include "moc_MainWindow.cpp"
-#include "moc_ProjectorWidget.cpp"
+//#include "include/moc_MainWindow.cpp"
+//#include "include/moc_ProjectorWidget.cpp"
 
 #include "FlyCapture2.h"
 
