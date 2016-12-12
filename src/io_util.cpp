@@ -37,7 +37,11 @@ bool io_util::write_ply(const std::string & filename, cv::Mat const& pointcloud_
   }
 
   bool binary = false;
-  bool colors = pointcloud_colors.data;
+  bool colors = false;
+  if( pointcloud_colors.data )
+    {
+    colors = true;
+    }
 
   std::vector<int> points_index;
   points_index.reserve( pointcloud_points.total());

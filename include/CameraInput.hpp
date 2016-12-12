@@ -39,11 +39,17 @@ public :
   void Run();
   void SetCameraFrameRate(double framerate);
   double GetCameraFrameRate();
+  void ComputeTopBottomLines();
 
   //void SetFrameRate(double frameRate) { this->FrameRate = frameRate; };
   void SetNbImages(int nbImages) { this->NbImages = nbImages; };
+  void SetTopLine( int topLine ) { this->TopLine = topLine; };
+  void SetBottomLine( int bottomLine ) { this->BottomLine = bottomLine; };
+
   //double GetFrameRate() const { return this->FrameRate; };
   int GetNbImages() const { return this->NbImages; };
+  int GetTopLine() const { return this->TopLine; };
+  int GetBottomLine() const { return this->BottomLine; };
 
   void RecordImages();
   cv::Mat DisplayImages();
@@ -54,5 +60,6 @@ public :
 private :
   //double FrameRate;
   int NbImages;
-
+  int TopLine;
+  int BottomLine;
 };

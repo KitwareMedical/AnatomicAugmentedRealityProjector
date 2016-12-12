@@ -63,7 +63,7 @@ public:
   cv::Point3d approximate_ray_intersection(const cv::Point3d & v1, const cv::Point3d & q1,
     const cv::Point3d & v2, const cv::Point3d & q2, double * distance);
   cv::Point3d approximate_ray_plane_intersection( const cv::Mat & Rt, const cv::Mat & T,
-    const cv::Point3d & vc, const cv::Point3d & qc, const cv::Point3d & vp, const cv::Point3d & qp, double * distance );
+    const cv::Point3d & vc, const cv::Point3d & qc, const cv::Point3d & vp, const cv::Point3d & qp );
   /*Take an image with RGB components*/
   int DecodeColor( cv::Mat mat );
 

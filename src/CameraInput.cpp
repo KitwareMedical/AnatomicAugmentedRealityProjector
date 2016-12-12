@@ -27,6 +27,8 @@ limitations under the License.
 
 #include "FlyCapture2.h"
 
+#include <opencv2/imgproc/imgproc.hpp>
+
 #include <QTime>
 
 #include <iomanip>
@@ -278,4 +280,89 @@ cv::Mat CameraInput::DisplayImages()
   cv::transpose(mat, mat);
   cv::flip(mat, mat, 0);
   return mat;
+}
+
+void CameraInput::ComputeTopBottomLines()
+{
+  QString filename_ref = "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-skull-unordered\\fc2_save_2016-12-05-114506-0012.bmp";
+  if( filename_ref.isEmpty() )
+    {
+    return;
+    }
+  cv::Mat mat_color_ref = cv::imread( qPrintable( filename_ref ), CV_LOAD_IMAGE_COLOR );
+
+  QString filename;
+  cv::Mat mat_color;
+  cv::Mat mat_BGR;
+  cv::Mat mat_HSV;
+  cv::Vec3b pixel_HSV;
+  int min_row = mat_color_ref.rows;
+  int max_row = 0;
+  int max_i;
+  int min_i;
+  bool first = true;
+  for( int num_image = 0; num_image <= 100; num_image++ )
+    {
+    if( num_image < 10 )
+      {
+      filename = QString( "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-skull-unordered\\fc2_save_2016-12-05-114506-000%1.bmp" ).arg( num_image );
+      }
+    else if( num_image < 100 )
+      {
+      filename = QString( "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-skull-unordered\\fc2_save_2016-12-05-114506-00%1.bmp" ).arg( num_image );
+      }
+    else
+      {
+      filename = QString( "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-skull-unordered\\fc2_save_2016-12-05-114506-0%1.bmp" ).arg( num_image );
+      }
+    if( filename.isEmpty() )
+      {
+      return;
+      }
+    mat_color = cv::imread( qPrintable( filename ), CV_LOAD_IMAGE_COLOR );
+
+    // Substract 2 images to keep only the line illuminated by the projector
+    cv::subtract( mat_color, mat_color_ref, mat_BGR );
+    if( !mat_BGR.data || mat_BGR.type() != CV_8UC3 )
+      {
+      std::cout << "ERROR invalid cv::Mat data\n" << std::endl;
+      }
+
+    //morphological opening (remove small objects from the foreground)
+    cv::erode( mat_BGR, mat_BGR, cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5 ) ) );
+    dilate( mat_BGR, mat_BGR, cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5 ) ) );
+
+    //Convert the captured frame from BGR to HSV
+    cv::cvtColor( mat_BGR, mat_HSV, cv::COLOR_BGR2HSV );
+
+    max_i = 0;
+    min_i = mat_HSV.rows;
+    first = true;
+    for( int i = 0; i < mat_HSV.rows; i++ )
+      {
+      for( int j = 0; j < mat_HSV.cols; j++ )
+        {
+        pixel_HSV = mat_HSV.at< cv::Vec3b >( i, j );
+        if( pixel_HSV.val[ 2 ] > 90 )
+          {
+          if( first == true )
+            {
+            min_i = i;
+            first = false;
+            }
+          max_i = i;
+          }
+        }
+      }
+    if( max_i > max_row )
+      {
+      max_row = max_i;
+      }
+    if( min_i < min_row )
+      {
+      min_row = min_i;
+      }
+    }
+  this->SetTopLine( min_row );
+  this->SetBottomLine( max_row );
 }

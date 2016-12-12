@@ -132,11 +132,11 @@ bool CalibrationData::SaveCalibrationYML(QString const& filename)
 
 bool CalibrationData::SaveCalibrationMatlab(QString const& filename)
 {
-  FILE * fp = fopen(qPrintable(filename), "w");
-  if (!fp)
-  {
+  FILE * fp;
+  if( fopen_s( &fp, qPrintable( filename ), "w" ) != 0 )
+    {
     return false;
-  }
+    }
 
   cv::Mat rvec;
   cv::Rodrigues(R, rvec);
