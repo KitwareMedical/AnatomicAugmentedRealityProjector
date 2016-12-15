@@ -36,24 +36,28 @@ public :
   CameraInput();
   ~CameraInput();
 
-  void Run();
+  bool Run(); // return true if a camera was found and successfully started
   void SetCameraFrameRate(double framerate);
   double GetCameraFrameRate();
-  void ComputeTopBottomLines();
+  void FindTopBottomLines( cv::Mat mat_color_ref, cv::Mat mat_color );
 
   //void SetFrameRate(double frameRate) { this->FrameRate = frameRate; };
   void SetNbImages(int nbImages) { this->NbImages = nbImages; };
   void SetTopLine( int topLine ) { this->TopLine = topLine; };
   void SetBottomLine( int bottomLine ) { this->BottomLine = bottomLine; };
+  void SetBufferSize( int size ) { this->BufferSize = size; };
 
   //double GetFrameRate() const { return this->FrameRate; };
   int GetNbImages() const { return this->NbImages; };
   int GetTopLine() const { return this->TopLine; };
   int GetBottomLine() const { return this->BottomLine; };
+  int GetBufferSize() const { return this->BufferSize; };
 
   void RecordImages();
-  cv::Mat DisplayImages();
+  cv::Mat GetImageFromBuffer();
 
+  void PutFrameInBuffer( cv::Mat &f, int index );
+  cv::Mat ConvertImageToMat( FlyCapture2::Image rgbImage );
 
   FlyCapture2::Camera Camera;
 
@@ -62,4 +66,6 @@ private :
   int NbImages;
   int TopLine;
   int BottomLine;
+  std::vector<cv::Mat> FrameBuffer;
+  int BufferSize;
 };
