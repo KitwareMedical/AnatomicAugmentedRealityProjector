@@ -51,21 +51,26 @@ class Vec2iHash
   };
 
 class MainWindow : public QMainWindow
-{
+  {
   Q_OBJECT
 
 public:
-  explicit MainWindow(QWidget *parent = 0);
+  explicit MainWindow( QWidget *parent = 0 );
   ~MainWindow();
-  void triangulate_stereo(const cv::Mat & K1, const cv::Mat & kc1, const cv::Mat & K2, const cv::Mat & kc2,
+  void triangulate_stereo( const cv::Mat & K1, const cv::Mat & kc1, const cv::Mat & K2, const cv::Mat & kc2,
     const cv::Mat & Rt, const cv::Mat & T, const cv::Point2i & p1, const cv::Point2i & p2,
-    cv::Point3d & p3d, double * distance);
-  cv::Point3d approximate_ray_intersection(const cv::Point3d & v1, const cv::Point3d & q1,
-    const cv::Point3d & v2, const cv::Point3d & q2, double * distance);
+    cv::Point3d & p3d, double * distance );
+  cv::Point3d approximate_ray_intersection( const cv::Point3d & v1, const cv::Point3d & q1,
+    const cv::Point3d & v2, const cv::Point3d & q2, double * distance );
   cv::Point3d approximate_ray_plane_intersection( const cv::Mat & Rt, const cv::Mat & T,
     const cv::Point3d & vc, const cv::Point3d & qc, const cv::Point3d & vp, const cv::Point3d & qp );
   /*Take an image with RGB components*/
   int DecodeColor( cv::Mat mat );
+  void ComputePointCloud( cv::Mat *pointcloud, cv::Mat *pointcloud_colors, cv::Mat mat_color_ref, cv::Mat mat_color, cv::Mat imageTest );
+  cv::Mat GetCurrentMat() const { return this->CurrentMat; };
+  void SetCurrentMat( cv::Mat currentMat ) { this->CurrentMat = currentMat; };
+  int GetTimerShots() const { return this->TimerShots; };
+  void SetTimerShots( int timerShots ) { this->TimerShots = timerShots; };
 
 protected slots:
   void on_proj_display_clicked();
@@ -92,7 +97,10 @@ private:
   ProjectorWidget Projector;
   CameraInput CamInput;
   QTimer *timer;
+  QTimer *AnalyzeTimer;
   CalibrationData Calib;
+  cv::Mat CurrentMat;
+  int TimerShots;
 };
 
 #endif // MAINWINDOW_H

@@ -40,7 +40,10 @@ ProjectorWidget::ProjectorWidget(QWidget * parent, Qt::WindowFlags flags) :
   Height(1080),
   Width(1920),
   LineThickness(1),
-  Row(100)
+  Row(100),
+  BlueColor(255),
+  GreenColor(255),
+  RedColor(255)
 {}
 
 ProjectorWidget::~ProjectorWidget()
