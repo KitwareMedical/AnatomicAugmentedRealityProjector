@@ -59,7 +59,7 @@ CameraInput::~CameraInput()
   }
 }
 
-void CameraInput::Run()
+bool CameraInput::Run()
 {
   Error error;
   BusManager busMgr;
@@ -72,12 +72,12 @@ void CameraInput::Run()
   if (error != PGRERROR_OK)
   {
     error.PrintErrorTrace();
-    return;
+    return false;
   }
   if (numCameras < 1)
   {
     std::cout << "No camera detected." << std::endl;
-    return;
+    return false;
   }
   else
   {
@@ -88,14 +88,14 @@ void CameraInput::Run()
   if (error != PGRERROR_OK)
   {
     error.PrintErrorTrace();
-    return;
+    return false;
   }
 
   error = Camera.Connect(&guid);
   if (error != PGRERROR_OK)
   {
     error.PrintErrorTrace();
-    return;
+    return false;
   }
 
   //this->SetCameraFrameRate(this->FrameRate);
@@ -104,13 +104,14 @@ void CameraInput::Run()
   if (error == PGRERROR_ISOCH_BANDWIDTH_EXCEEDED)
   {
     std::cout << "Bandwidth exceeded" << std::endl;
-    return;
+    return false;
   }
   else if (error != PGRERROR_OK)
   {
     std::cout << "Failed to start image capture" << std::endl;
-    return;
+    return false;
   }
+  return true;
 }
 
 void CameraInput::SetCameraFrameRate(double frameRate)
@@ -195,7 +196,7 @@ double CameraInput::GetCameraFrameRate()
 
 void CameraInput::RecordImages()
 {
-  std::cout << "Grabbing " << this->NbImages << " images" << std::endl;
+  //std::cout << "Grabbing " << this->NbImages << " images" << std::endl;
 
   Error error;
   Image rawImage;
@@ -253,27 +254,25 @@ void CameraInput::RecordImages()
 }
 // note : return a value to detect an error ?
 
-cv::Mat CameraInput::DisplayImages()
+cv::Mat CameraInput::GetImageFromBuffer()
 {
   FlyCapture2::Error error;
   static bool flag = false;
   FlyCapture2::Image rawImage;
   error = this->Camera.RetrieveBuffer(&rawImage);
   if (error != FlyCapture2::PGRERROR_OK)
-  {
+    {
     error.PrintErrorTrace();
     //if (timer.elapsed() > warmup) { error_frame++; }
     //return;
-  }
+    }
   //error_frame = 0;
   // convert to rgb
   FlyCapture2::Image rgbImage;
   rawImage.Convert(FlyCapture2::PIXEL_FORMAT_BGR, &rgbImage);
 
   // convert to OpenCV Mat
-  unsigned int rowBytes = (double)rgbImage.GetReceivedDataSize() / (double)rgbImage.GetRows();
-  cv::Mat mat = cv::Mat(rgbImage.GetRows(), rgbImage.GetCols(), CV_8UC3, rgbImage.GetData(), rowBytes);
-
+  cv::Mat mat = ConvertImageToMat( rgbImage );
 
   cv::transpose(mat, mat);
   cv::flip(mat, mat, 0);
@@ -282,87 +281,77 @@ cv::Mat CameraInput::DisplayImages()
   return mat;
 }
 
-void CameraInput::ComputeTopBottomLines()
+void CameraInput::FindTopBottomLines(cv::Mat mat_color_ref, cv::Mat mat_color)
 {
-  QString filename_ref = "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-skull-unordered\\fc2_save_2016-12-05-114506-0012.bmp";
-  if( filename_ref.isEmpty() )
+  if( !mat_color_ref.data || mat_color_ref.type() != CV_8UC3 || !mat_color.data || mat_color.type() != CV_8UC3 )
     {
+    std::cout << "ERROR invalid cv::Mat data" << std::endl;
     return;
     }
-  cv::Mat mat_color_ref = cv::imread( qPrintable( filename_ref ), CV_LOAD_IMAGE_COLOR );
-
-  QString filename;
-  cv::Mat mat_color;
   cv::Mat mat_BGR;
   cv::Mat mat_HSV;
   cv::Vec3b pixel_HSV;
-  int min_row = mat_color_ref.rows;
-  int max_row = 0;
+  //int min_row = mat_color_ref.rows;
+  //int max_row = 0;
   int max_i;
   int min_i;
   bool first = true;
-  for( int num_image = 0; num_image <= 100; num_image++ )
+
+  // Substract 2 images to keep only the line illuminated by the projector
+  cv::subtract( mat_color, mat_color_ref, mat_BGR );
+  if( !mat_BGR.data || mat_BGR.type() != CV_8UC3 )
     {
-    if( num_image < 10 )
-      {
-      filename = QString( "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-skull-unordered\\fc2_save_2016-12-05-114506-000%1.bmp" ).arg( num_image );
-      }
-    else if( num_image < 100 )
-      {
-      filename = QString( "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-skull-unordered\\fc2_save_2016-12-05-114506-00%1.bmp" ).arg( num_image );
-      }
-    else
-      {
-      filename = QString( "C:\\Users\\Kitware\\Desktop\\Mode2-280fps-ruler\\white-skull-unordered\\fc2_save_2016-12-05-114506-0%1.bmp" ).arg( num_image );
-      }
-    if( filename.isEmpty() )
-      {
-      return;
-      }
-    mat_color = cv::imread( qPrintable( filename ), CV_LOAD_IMAGE_COLOR );
+    std::cout << "ERROR invalid cv::Mat data\n" << std::endl;
+    }
 
-    // Substract 2 images to keep only the line illuminated by the projector
-    cv::subtract( mat_color, mat_color_ref, mat_BGR );
-    if( !mat_BGR.data || mat_BGR.type() != CV_8UC3 )
+  //morphological opening (remove small objects from the foreground)
+  cv::erode( mat_BGR, mat_BGR, cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5 ) ) );
+  dilate( mat_BGR, mat_BGR, cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5 ) ) );
+
+  //Convert the captured frame from BGR to HSV
+  cv::cvtColor( mat_BGR, mat_HSV, cv::COLOR_BGR2HSV );
+
+  max_i = 0;
+  min_i = mat_HSV.rows;
+  first = true;
+  for( int i = 0; i < mat_HSV.rows; i++ )
+    {
+    for( int j = 0; j < mat_HSV.cols; j++ )
       {
-      std::cout << "ERROR invalid cv::Mat data\n" << std::endl;
-      }
-
-    //morphological opening (remove small objects from the foreground)
-    cv::erode( mat_BGR, mat_BGR, cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5 ) ) );
-    dilate( mat_BGR, mat_BGR, cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5 ) ) );
-
-    //Convert the captured frame from BGR to HSV
-    cv::cvtColor( mat_BGR, mat_HSV, cv::COLOR_BGR2HSV );
-
-    max_i = 0;
-    min_i = mat_HSV.rows;
-    first = true;
-    for( int i = 0; i < mat_HSV.rows; i++ )
-      {
-      for( int j = 0; j < mat_HSV.cols; j++ )
+      pixel_HSV = mat_HSV.at< cv::Vec3b >( i, j );
+      if( pixel_HSV.val[ 2 ] > 90 )
         {
-        pixel_HSV = mat_HSV.at< cv::Vec3b >( i, j );
-        if( pixel_HSV.val[ 2 ] > 90 )
+        if( first == true )
           {
-          if( first == true )
-            {
-            min_i = i;
-            first = false;
-            }
-          max_i = i;
+          min_i = i;
+          first = false;
           }
+        max_i = i;
         }
       }
-    if( max_i > max_row )
-      {
-      max_row = max_i;
-      }
-    if( min_i < min_row )
-      {
-      min_row = min_i;
-      }
     }
-  this->SetTopLine( min_row );
-  this->SetBottomLine( max_row );
+  if( max_i > this->GetBottomLine() )
+    {
+    this->SetBottomLine( max_i );
+    }
+  if( min_i < this->GetTopLine() )
+    {
+    this->SetTopLine( min_i );
+    }
+}
+
+void CameraInput::PutFrameInBuffer( cv::Mat &f, int index )
+{
+  int pos = index%this->BufferSize;
+  this->FrameBuffer[ pos ] = f.clone();
+
+  return;
+
+}
+
+cv::Mat CameraInput::ConvertImageToMat( FlyCapture2::Image rgbImage )
+{
+  unsigned int rowBytes = ( double )rgbImage.GetReceivedDataSize() / ( double )rgbImage.GetRows();
+  cv::Mat mat = cv::Mat( rgbImage.GetRows(), rgbImage.GetCols(), CV_8UC3, rgbImage.GetData(), rowBytes );
+  return mat;
 }
