@@ -321,7 +321,7 @@ void MainWindow::on_analyze_clicked()
   // imageTest is used to control which points have been used on the projector for the reconstruction
   cv::Mat imageTest = cv::Mat::zeros( mat_color_ref.rows, mat_color_ref.cols, CV_8UC3 );
   this->TimerShots = 0;
-  while( this->TimerShots < 400 )
+  while( this->TimerShots < 600 )
     {
     this->DisplayCamera();
     QCoreApplication::processEvents();
@@ -498,7 +498,7 @@ void MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
   //cv::Mat mat_color;
   cv::Mat mat_HSV;
   cv::Mat mat_BGR;
-  cv::Vec3b pixel_HSV;
+  cv::Mat mat_gray;
   std::vector<cv::Point2i> cam_points;
   std::vector<cv::Point2i>::iterator it_cam_points;
   int row = 0;
@@ -525,13 +525,13 @@ void MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
     qCritical() << "ERROR invalid cv::Mat data\n";
     }
 
-  //cv::imshow( "Image before preprocessing", mat );
+  //cv::imshow( "Image before preprocessing", mat_BGR );
 
   //morphological opening (remove small objects from the foreground)
-  cv::erode( mat_BGR, mat_BGR, cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5 ) ) );
-  dilate( mat_BGR, mat_BGR, cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5 ) ) );
+  //cv::erode( mat_BGR, mat_BGR, cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5 ) ) );
+  //dilate( mat_BGR, mat_BGR, cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 5, 5 ) ) );
 
-  //cv::imshow( "Image after background substraction and preprocessing", mat );
+  //cv::imshow( "Image after background substraction and preprocessing", mat_BGR );
   //cv::waitKey( 0 );
 
   //Convert the captured frame from BGR to HSV
@@ -539,22 +539,53 @@ void MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
 
   current_row = 0;
   cam_points.clear();
-  for( int i = 0; i < mat_HSV.rows; i++ )
+
+  cv::cvtColor( mat_BGR, mat_gray, cv::COLOR_BGR2GRAY );
+  //cv::imshow( "Gray image", mat_gray );
+  //cv::waitKey( 0 );
+
+  unsigned char sat_max;
+  int sum;
+  double average;
+  cv::Point2i point_max;
+  unsigned char sat;
+  for( int j = 0; j < mat_HSV.cols; j++ )
     {
-    for( int j = 0; j < mat_HSV.cols; j++ )
+    //sum = mat_HSV.at< cv::Vec3b >( 0, j )[ 2 ] + mat_HSV.at< cv::Vec3b >( 1, j )[ 2 ] + mat_HSV.at< cv::Vec3b >( 2, j )[ 2 ];
+    sum = mat_gray.at< unsigned char >( 0, j ) + mat_gray.at< unsigned char >( 1, j ) + mat_gray.at< unsigned char >( 2, j );
+    sat_max = sum;
+    point_max = cv::Point2i( 0, 0 );
+    for( int i = 2; i < mat_HSV.rows - 1; i++ )
       {
-      pixel_HSV = mat_HSV.at< cv::Vec3b >( i, j );
-      if( pixel_HSV.val[ 2 ] > 110 )
+      sum = sum - mat_gray.at< unsigned char >( i - 2, j ) + mat_gray.at< unsigned char >( i + 1, j );
+      average = sum / 3;
+      //&& average > 210 )
+      //sat = mat_HSV.at< cv::Vec3b >( i, j )[2];
+      //if( sat > sat_max && sat > 230 )
+      if( average > sat_max && average > 80 )
         {
-        cam_points.push_back( cv::Point2i( j, i ) );
-        imageTest.at<cv::Vec3b>( i, j ) = { 255,255,255 };
+        //std::cout << "average > sat_max ; i = " << i << std::endl;
+        point_max = cv::Point2i( j, i );
+        sat_max = average;
         if( j > 800 ) // We suppose that the surface is flat after the column 865 (sheet of paper)
           {
           current_row = i;
           }
         }
       }
+    if( point_max != cv::Point2i( 0, 0 ) )
+      {
+      //std::cout << "point max valid" << std::endl;
+      cam_points.push_back( point_max );
+      imageTest.at<cv::Vec3b>( point_max ) = { 255,255,255 };
+      mat_color.at<cv::Vec3b>( point_max ) = { 255, 0, 255 };
+      }
     }
+
+  //cv::imshow( "Points selection with their saturation values", imageTest );
+  //cv::imshow( "selected points", mat_color );
+  //cv::waitKey( 0 );
+
   row = ( current_row - this->CamInput.GetTopLine() )*this->Projector.GetHeight() / ( this->CamInput.GetBottomLine() - this->CamInput.GetTopLine() );
   if( row <= 0 || row > this->Projector.GetHeight() )
     {
@@ -597,11 +628,20 @@ void MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
     cloud_point[ 1 ] = p.y;
     cloud_point[ 2 ] = p.z;
 
-    const cv::Vec3b & vec = mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x );
+    //const cv::Vec3d & vec_d = cv::Vec3b (mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y - 1, ( *it_cam_points ).x ) + mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x ) + mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y + 1, ( *it_cam_points ).x ));
+    //cv::Vec3b vec = vec_d / 3;
+    double B = mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y - 1, ( *it_cam_points ).x )[ 0 ] + mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x )[ 0 ] + mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y + 1, ( *it_cam_points ).x )[ 0 ];
+    double G = mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y - 1, ( *it_cam_points ).x )[ 1 ] + mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x )[ 1 ] + mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y + 1, ( *it_cam_points ).x )[ 1 ];
+    double R = mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y - 1, ( *it_cam_points ).x )[ 2 ] + mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x )[ 2 ] + mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y + 1, ( *it_cam_points ).x )[ 2 ];
+    unsigned char vec_B = (B) / 3;
+    unsigned char vec_G = (G) / 3;
+    unsigned char vec_R = (R) / 3;
+
+    //std::cout << "vec = " << int(vec_x) << "mat_BGR" << mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x ) << std::endl;
     cv::Vec3b & cloud_color = (*pointcloud_colors).at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x );
-    cloud_color[ 0 ] = vec[ 0 ];
-    cloud_color[ 1 ] = vec[ 1 ];
-    cloud_color[ 2 ] = vec[ 2 ];
+    cloud_color[ 0 ] = vec_B;
+    cloud_color[ 1 ] = vec_G;
+    cloud_color[ 2 ] = vec_R;
 
     imageTest.at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x ) = { 255,255,255 };
     }
