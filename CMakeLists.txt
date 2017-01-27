@@ -34,6 +34,9 @@ find_package(Qt5Concurrent REQUIRED)
 find_package(opencv REQUIRED)
 find_package(FlyCapture REQUIRED)
 
+find_package(ITK REQUIRED)
+INCLUDE(${ITK_USE_FILE})
+
 set( source_files
   src/CalibrationData.cpp
   src/CameraInput.cpp
@@ -68,4 +71,5 @@ target_link_libraries( AnatomicAugmentedRealityProjector
   Qt5::Widgets Qt5::Concurrent 
   ${OpenCV_LIBS} 
   ${FLYCAPTURE2_LIB}
+  ${ITK_LIBRARIES}
   )

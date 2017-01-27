@@ -71,10 +71,16 @@ public:
   void SetCurrentMat( cv::Mat currentMat ) { this->CurrentMat = currentMat; };
   int GetTimerShots() const { return this->TimerShots; };
   void SetTimerShots( int timerShots ) { this->TimerShots = timerShots; };
+  std::vector<cv::Vec3f> get_normal_of_a_plane( std::vector<cv::Vec3f> points );
+  std::vector<cv::Vec3f> ransac( std::vector<cv::Vec3f> points, int min, int iter, float thres, int min_inliers );
+  std::vector<cv::Vec3f> ransac_green_plane( std::vector<cv::Vec3f> points, int min, int iter, float thres, int min_inliers, const cv::Vec3f normal_B, const cv::Vec3f normal_R );
+  void density_probability( cv::Mat pointcloud, cv::Mat pointcloud_BGR, std::vector<cv::Vec3f> *points_B, std::vector<cv::Vec3f> *points_G, std::vector<cv::Vec3f> *points_R );
+  cv::Vec3f three_planes_intersection( cv::Vec3f n1, cv::Vec3f n2, cv::Vec3f n3, cv::Vec3f x1, cv::Vec3f x2, cv::Vec3f x3 );
 
 protected slots:
   void on_proj_display_clicked();
   void on_proj_displayColor_clicked();
+  void on_detect_colors_clicked();
   void on_cam_display_clicked();
   void on_cam_record_clicked();
   void on_analyze_clicked();
