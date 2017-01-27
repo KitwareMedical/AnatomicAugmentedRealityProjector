@@ -29,6 +29,9 @@ limitations under the License.
 
 #include "FlyCapture2.h"
 
+#include "itkVector.h"
+#include "itkGaussianMembershipFunction.h"
+
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <QtConcurrent>
@@ -41,6 +44,7 @@ limitations under the License.
 
 #include <iostream>
 #include <map>
+#include <time.h>
 
 MainWindow::MainWindow( QWidget *parent ) :
   QMainWindow( parent ),
@@ -201,6 +205,75 @@ void MainWindow::on_proj_displayColor_clicked()
   disconnect( &( this->Projector ), SIGNAL( new_image( QPixmap ) ), this, SLOT( _on_new_projector_image( QPixmap ) ) );
   }
 
+void MainWindow::on_detect_colors_clicked()
+  {
+  /*QString filename = "C:\\Camera_Projector_Calibration\\Color-line\\Test-colors\\green-2.bmp";
+  if( filename.isEmpty() )
+    {
+    return;
+    }
+  cv::Mat mat_BGR = cv::imread( qPrintable( filename ), CV_LOAD_IMAGE_COLOR );
+  if( !mat_BGR.data || mat_BGR.type() != CV_8UC3 )
+    {
+    qCritical() << "ERROR invalid cv::Mat data\n";
+    }
+  cv::Mat essai = mat_BGR;
+  cv::Mat mat_HSV;
+  cv::cvtColor( mat_BGR, mat_HSV, cv::COLOR_BGR2HSV );
+  std::cout << "Col = " << mat_BGR.cols << std::endl;
+
+  int min = 30;
+  int max = 595;
+
+  cv::Vec3b pix_BGR, pix_HSV;
+  std::cout << "B :" << std::endl;
+  for( int i = min; i < max; i++ )
+    {
+    pix_BGR = mat_BGR.at<cv::Vec3b>( 200, i );
+    std::cout << int( pix_BGR[ 0 ] ) << " ";
+    }
+  std::cout << std::endl << "G :" << std::endl;
+  for( int i = min; i < max; i++ )
+    {
+    pix_BGR = mat_BGR.at<cv::Vec3b>( 200, i );
+    //std::cout << "(" << int( pix_BGR[ 0 ] ) << "," << int( pix_BGR[ 1 ] ) << "," << int( pix_BGR[ 2 ] ) << ") ";//(" << int(pix_HSV[ 0 ]) << "," << int(pix_HSV[ 1 ]) << "," << int(pix_HSV[ 2 ]) << ")     ";
+    //std::cout << int(pix_HSV[ 0 ]) << " ";
+    std::cout << int( pix_BGR[ 1 ] ) << " ";
+    }
+  std::cout << std::endl << "R :" << std::endl;
+  for( int i = min; i < max; i++ )
+    {
+    pix_BGR = mat_BGR.at<cv::Vec3b>( 200, i );
+    std::cout << int( pix_BGR[ 2 ] ) << " ";
+    }
+  std::cout << std::endl << "HSV :" << std::endl;
+  for( int i = min; i < max; i++ )
+    {
+    pix_HSV = mat_HSV.at<cv::Vec3b>( 200, i );
+    std::cout << int( pix_HSV[ 0 ] ) << " ";
+    essai.at<cv::Vec3b>( 200, i ) = cv::Vec3b( 0, 0, 255 );
+    }
+
+  for( int j = 0; j < mat_BGR.rows; j++ )
+    {
+    essai.at<cv::Vec3b>( j, min ) = cv::Vec3b( 255, 0, 0 );
+    essai.at<cv::Vec3b>( j, max ) = cv::Vec3b( 255, 0, 0 );
+    }
+  cv::imshow( "selected line", essai );
+  cv::waitKey( 0 );*/
+  /*
+  cv::Vec3f n1 = cv::Vec3f( 1, 0, 0 ), n2 = cv::Vec3f( 0, 1, 0 ), n3 = cv::Vec3f( 0, 0, 1 );
+  cv::Vec3f x1 = cv::Vec3f( 0, 1, 1 ), x2 = cv::Vec3f( 1, 0, 1 ), x3 = cv::Vec3f( 1, 1, 0 );
+  cv::Vec3f a = three_planes_intersection( n1, n2, n3, x1, x2, x3 );
+  std::cout << "a = " << a << std::endl;*/
+
+  cv::Mat pointcloud;
+  cv::Mat pointcloud_BGR;
+  //density_probability( pointcloud, pointcloud_BGR );
+
+  return;
+  }
+
 void MainWindow::on_cam_display_clicked()
 {
   bool success = CamInput.Run();
@@ -321,7 +394,7 @@ void MainWindow::on_analyze_clicked()
   // imageTest is used to control which points have been used on the projector for the reconstruction
   cv::Mat imageTest = cv::Mat::zeros( mat_color_ref.rows, mat_color_ref.cols, CV_8UC3 );
   this->TimerShots = 0;
-  while( this->TimerShots < 600 )
+  while( this->TimerShots < 700 )
     {
     this->DisplayCamera();
     QCoreApplication::processEvents();
@@ -332,26 +405,26 @@ void MainWindow::on_analyze_clicked()
 
   for( int row = 0; row < imageTest.rows; row++ )
     {
-    imageTest.at<cv::Vec3b>( row, 800 ) = { 0, 0, 255 };
+    imageTest.at<cv::Vec3b>( row, 865 ) = { 0, 0, 255 };
     }
 
   cv::imshow( "ImageTest", imageTest );
-  //cv::waitKey(0);
+  cv::waitKey(0);
   cv::Mat Mat_minmaxRow = cv::Mat::zeros( mat_color_ref.rows, mat_color_ref.cols, CV_8UC1 );
   for( int col = 0; col < Mat_minmaxRow.cols; col++ )
     {
     Mat_minmaxRow.at<unsigned char>( this->CamInput.GetBottomLine(), col ) = 255;
     Mat_minmaxRow.at<unsigned char>( this->CamInput.GetTopLine(), col ) = 255;
     }
-  cv::imshow( "Max Row", Mat_minmaxRow );
-  cv::waitKey( 0 );
+  //cv::imshow( "Max Row", Mat_minmaxRow );
+  //cv::waitKey( 0 );
 
   if( !pointcloud.data )
     {
     qCritical() << "ERROR, reconstruction failed\n";
     }
 
-  QString name = "pointcloud";
+  QString name = "C:\\Camera_Projector_Calibration\\Color-line\\Total\\green_condition_plane\\pointcloud_BGR_original";
   QString filename = QFileDialog::getSaveFileName( this, "Save pointcloud", name + ".ply", "Pointclouds (*.ply)" );
   if( !filename.isEmpty() )
     {
@@ -364,6 +437,307 @@ void MainWindow::on_analyze_clicked()
       return;
       }
     }
+
+  /*
+  // Find a plane in the pointcloud
+  std::vector<cv::Vec3f> points;
+  for( int row = 0; row < pointcloud.rows; row++ )
+    {
+    for( int col = 0; col < pointcloud.cols; col++ )
+      {
+      if( pointcloud.at<cv::Vec3f>( row, col )[ 2 ] > 0 )
+        {
+        points.push_back( pointcloud.at<cv::Vec3f>( row, col ) );
+        }
+      }
+    }
+
+  //std::vector<cv::Vec3f> res = get_normal_of_a_plane( points );
+  std::vector<cv::Vec3f> res = ransac( points, 3, 200, 0.02f, 1000 );
+  //min – the minimum number of data values required to fit the model
+  //iter – the maximum number of iterations allowed in the algorithm
+  //thres – a threshold value for determining when a data point fits a model
+  //min_inliers – the number of close data values required to assert that a model fits well to data
+  if( res.size() != 4 )
+    {
+    std::cout << "Error in the RANSAC algorithm" << std::endl;
+    return;
+    }
+  cv::Vec3f normal = res[ 0 ];
+  cv::Vec3f A = res[ 1 ];
+  cv::Vec3f B = res[ 2 ];
+  cv::Vec3f C = res[ 3 ];
+
+  std::cout << "normal : " << normal << " A : " << A << std::endl;
+
+  //Equation of the plane
+  //float d = A[ 0 ] * normal[ 0 ] + A[ 1 ] * normal[ 1 ] + A[ 2 ] * normal[ 2 ];
+  //std::cout << normal[ 0 ] << "x + " << normal[ 1 ] << "y + " << normal[ 2 ] << "z = " << d << std::endl;
+  float dist;
+  float dist_max = 0.0f;
+  for( int row = 0; row < pointcloud.rows; row++ )
+    {
+    for( int col = 0; col < pointcloud.cols; col++ )
+      {
+      cv::Vec3f crt = pointcloud.at<cv::Vec3f>( row, col );
+      if( crt[ 2 ] > 0 )
+        {
+        cv::Vec3f vec = pointcloud.at<cv::Vec3f>( row, col ) - A;
+        dist = std::abs( normal[ 0 ] * vec[ 0 ] + normal[ 1 ] * vec[ 1 ] + normal[ 2 ] * vec[ 2 ] );
+        dist = dist / sqrt( normal[ 0 ] * normal[ 0 ] + normal[ 1 ] * normal[ 1 ] + normal[ 2 ] * normal[ 2 ] );
+        if( dist < 0.05f )
+          {
+          pointcloud_colors.at<cv::Vec3b>( row, col ) = cv::Vec3f( 0, 0, 255 );
+          }
+        else if( dist >= 0.05f && dist <= 0.1f )
+          {
+          pointcloud_colors.at<cv::Vec3b>( row, col ) = cv::Vec3f( 255, 0, 0 );
+          }
+        else
+          {
+          //std::cout << dist << std::endl;
+          if( dist > dist_max )
+            {
+            dist_max = dist;
+            }
+          pointcloud_colors.at<cv::Vec3b>( row, col ) = cv::Vec3f( 255, 255, 255 );
+          }
+        }
+      if( crt == A || crt == B || crt == C )
+        {
+        pointcloud_colors.at<cv::Vec3b>( row, col ) = cv::Vec3f( 0, 255, 0 );
+        }
+      }
+    }
+
+  std::cout << "dist_max = " << dist_max << std::endl;
+  name = "pointcloud-plane";
+  filename = QFileDialog::getSaveFileName( this, "Save pointcloud", name + ".ply", "Pointclouds (*.ply)" );
+  if( !filename.isEmpty() )
+    {
+    std::cout << "Saving the pointcloud" << std::endl;
+    bool binary = false;
+    bool success = io_util::write_ply( filename.toStdString(), pointcloud, pointcloud_colors );
+    if( success == false )
+      {
+      qCritical() << "ERROR, saving the pointcloud failed\n";
+      return;
+      }
+    }
+  */
+
+  std::vector<cv::Vec3f> points_B, points_G, points_R;
+  density_probability( pointcloud, pointcloud_colors, &points_B, &points_G, &points_R );
+
+  // Find the centers
+  cv::Vec3f center_B = cv::Vec3b( 0, 0, 0 );
+  cv::Vec3f center_R = cv::Vec3b( 0, 0, 0 );
+  cv::Vec3f center_G = cv::Vec3b( 0, 0, 0 );
+
+  int nb = 0;
+  float distance_B = 0, distance_R = 0, distance_G = 0;
+  for( auto pts = points_B.begin(); pts < points_B.end(); pts++ )
+    {
+    center_B += *pts;
+    nb++;
+    }
+  center_B = center_B / nb;
+  std::cout << "Center_B : " << center_B << std::endl;
+
+  nb = 0;
+  for( auto iter = points_R.cbegin(); iter != points_R.cend(); ++iter )
+    {
+    distance_B = std::sqrt( pow( center_B[ 0 ] - (*iter)[ 0 ], 2 ) + pow( center_B[ 1 ] - ( *iter )[ 1 ], 2 ) + pow( center_B[ 2 ] - ( *iter )[ 2 ], 2 ) );
+    if( distance_B < 0.4f )
+      {
+      center_R += ( *iter );
+      nb++;
+      }
+    }
+  center_R = center_R / nb;
+  std::cout << "Center_R : " << center_R << std::endl;
+
+  nb = 0;
+  for( auto iter = points_G.cbegin(); iter != points_G.cend(); ++iter )
+    {
+    distance_B = std::sqrt( pow( center_B[ 0 ] - ( *iter )[ 0 ], 2 ) + pow( center_B[ 1 ] - ( *iter )[ 1 ], 2 ) + pow( center_B[ 2 ] - ( *iter )[ 2 ], 2 ) );
+    distance_R = std::sqrt( pow( center_R[ 0 ] - ( *iter )[ 0 ], 2 ) + pow( center_R[ 1 ] - ( *iter )[ 1 ], 2 ) + pow( center_R[ 2 ] - ( *iter )[ 2 ], 2 ) );
+    if( distance_B < 0.4f && distance_R < 0.4f )
+      {
+      center_G += ( *iter );
+      nb++;
+      }
+    }
+  center_G = center_G / nb;
+  std::cout << "Center_G : " << center_G << std::endl;
+
+  // Redefine the colored vectors
+  std::vector<cv::Vec3f> good_B;
+  for( auto iter = points_B.cbegin(); iter != points_B.cend(); ++iter )
+    {
+    distance_B = std::sqrt( pow( center_B[ 0 ] - ( *iter )[ 0 ], 2 ) + pow( center_B[ 1 ] - ( *iter )[ 1 ], 2 ) + pow( center_B[ 2 ] - ( *iter )[ 2 ], 2 ) );
+    if( distance_B < 0.2f )
+      {
+      good_B.push_back( *iter );
+      }
+    }
+  std::vector<cv::Vec3f> good_R;
+  for( auto iter = points_R.cbegin(); iter != points_R.cend(); ++iter )
+    {
+    distance_R = std::sqrt( pow( center_R[ 0 ] - ( *iter )[ 0 ], 2 ) + pow( center_R[ 1 ] - ( *iter )[ 1 ], 2 ) + pow( center_R[ 2 ] - ( *iter )[ 2 ], 2 ) );
+    if( distance_R < 0.2f )
+      {
+      good_R.push_back( *iter );
+      }
+    }
+  std::vector<cv::Vec3f> good_G;
+  for( auto iter = points_G.cbegin(); iter != points_G.cend(); ++iter )
+    {
+    distance_G = std::sqrt( pow( center_G[ 0 ] - ( *iter )[ 0 ], 2 ) + pow( center_G[ 1 ] - ( *iter )[ 1 ], 2 ) + pow( center_G[ 2 ] - ( *iter )[ 2 ], 2 ) );
+    if( distance_G < 0.2f )
+      {
+      good_G.push_back( *iter );
+      }
+    }
+
+  float distB, distG, distR;
+  for( int row = 0; row < pointcloud.rows; row++ )
+    {
+    for( int col = 0; col < pointcloud.cols; col++ )
+      {
+      cv::Vec3f crt = pointcloud.at<cv::Vec3f>( row, col );
+      if( crt[ 2 ] > 0 )
+        {
+        distB = std::sqrt( pow( center_B[ 0 ] - crt[ 0 ], 2 ) + pow( center_B[ 1 ] - crt[ 1 ], 2 ) + pow( center_B[ 2 ] - crt[ 2 ], 2 ) );
+        distR = std::sqrt( pow( center_R[ 0 ] - crt[ 0 ], 2 ) + pow( center_R[ 1 ] - crt[ 1 ], 2 ) + pow( center_R[ 2 ] - crt[ 2 ], 2 ) );
+        distG = std::sqrt( pow( center_G[ 0 ] - crt[ 0 ], 2 ) + pow( center_G[ 1 ] - crt[ 1 ], 2 ) + pow( center_G[ 2 ] - crt[ 2 ], 2 ) );
+        pointcloud_colors.at<cv::Vec3b>( row, col ) = cv::Vec3b( 0, 0, 0 );
+        if( distB < 0.2f )
+          {
+          pointcloud_colors.at<cv::Vec3b>( row, col ) += cv::Vec3b( 255, 0, 0 );
+          }
+        if( distR < 0.2f )
+          {
+          pointcloud_colors.at<cv::Vec3b>( row, col ) += cv::Vec3b( 0, 0, 255 );
+          }
+        if( distG < 0.2f )
+          {
+          pointcloud_colors.at<cv::Vec3b>( row, col ) += cv::Vec3b( 0, 255, 0 );
+          }
+        }
+      }
+    }
+
+  name = "C:\\Camera_Projector_Calibration\\Color-line\\Total\\green_condition_plane\\pointcloud_BGR_selected_points";
+  filename = QFileDialog::getSaveFileName( this, "Save pointcloud", name + ".ply", "Pointclouds (*.ply)" );
+  if( !filename.isEmpty() )
+    {
+    std::cout << "Saving the pointcloud" << std::endl;
+    bool binary = false;
+    bool success = io_util::write_ply( filename.toStdString(), pointcloud, pointcloud_colors );
+    if( success == false )
+      {
+      qCritical() << "ERROR, saving the pointcloud failed\n";
+      return;
+      }
+    }
+
+  std::cout << "Size of blue vector : " << good_B.size() << std::endl;
+  std::cout << "Size of red vector : " << good_R.size() << std::endl;
+  std::cout << "Size of green vector : " << good_G.size() << std::endl;
+
+  std::vector<cv::Vec3f> res_B = ransac( good_B, 3, 100, 0.01f, 10 );
+  if( res_B.size() != 4 )
+    {
+    std::cout << "Error in the RANSAC algorithm" << std::endl;
+    return;
+    }
+  cv::Vec3f normal_B = res_B[ 0 ];
+  cv::Vec3f A_B = res_B[ 1 ];
+
+  std::vector<cv::Vec3f> res_R = ransac( good_R, 3, 100, 0.01f, std::min( 10, int( good_R.size() ) - 2 ) );
+  if( res_R.size() != 4 )
+    {
+    std::cout << "Error in the RANSAC algorithm" << std::endl;
+    return;
+    }
+  cv::Vec3f normal_R = res_R[ 0 ];
+  cv::Vec3f A_R = res_R[ 1 ];
+
+  std::vector<cv::Vec3f> res_G = ransac_green_plane( good_G, 3, 100, 0.01f, std::min( 10, int( good_R.size() ) - 2 ), normal_B, normal_R );
+  if( res_G.size() != 4 )
+    {
+    std::cout << "Error in the RANSAC algorithm" << std::endl;
+    return;
+    }
+  cv::Vec3f normal_G = res_G[ 0 ];
+  cv::Vec3f A_G = res_G[ 1 ];
+
+  std::cout << "Blue plane : normal : " << normal_B << " point A : " << A_B << std::endl;
+  std::cout << "Green plane : normal : " << normal_G << " point A : " << A_G << std::endl;
+  std::cout << "Red plane : normal : " << normal_R << " point A : " << A_R << std::endl;
+
+  std::cout << "perpendiculaire BR ? " << normal_B.dot( normal_R ) << std::endl;
+  std::cout << "perpendiculaire BG ? " << normal_B.dot( normal_G ) << std::endl;
+  std::cout << "perpendiculaire RG ? " << normal_R.dot( normal_G ) << std::endl;
+
+  cv::Vec3f intersection = three_planes_intersection( normal_B, normal_G, normal_R, A_B, A_G, A_R );
+  std::cout   << "Intersection : " << intersection << std::endl;
+
+  float dist_B, dist_G, dist_R, dist_intersection;
+  for( int row = 0; row < pointcloud.rows; row++ )
+    {
+    for( int col = 0; col < pointcloud.cols; col++ )
+      {
+      cv::Vec3f crt = pointcloud.at<cv::Vec3f>( row, col );
+      if( crt[ 2 ] > 0 )
+        {
+        cv::Vec3f vec_B = pointcloud.at<cv::Vec3f>( row, col ) - A_B;
+        cv::Vec3f vec_G = pointcloud.at<cv::Vec3f>( row, col ) - A_G;
+        cv::Vec3f vec_R = pointcloud.at<cv::Vec3f>( row, col ) - A_R;
+
+        dist_B = std::abs( normal_B.dot( vec_B ) )/ sqrt( normal_B.dot( normal_B ) );
+        dist_G = std::abs( normal_G.dot( vec_G ) ) / sqrt( normal_G.dot( normal_G ) );
+        dist_R = std::abs( normal_R.dot( vec_R ) ) / sqrt( normal_R.dot( normal_R ) );
+        dist_intersection = std::sqrt( pow( intersection[ 0 ] - crt[ 0 ], 2 ) + pow( intersection[ 1 ] - crt[ 1 ], 2 ) + pow( intersection[ 2 ] - crt[ 2 ], 2 ) );
+        if( dist_intersection < 0.05 )
+          {
+          pointcloud_colors.at<cv::Vec3b>( row, col ) = cv::Vec3f( 0, 255, 255 );
+          }
+        else if( dist_B < 0.01f )
+          {
+          pointcloud_colors.at<cv::Vec3b>( row, col ) = cv::Vec3f( 255, 0, 0 );
+          }
+        else if( dist_G < 0.01f )
+          {
+          pointcloud_colors.at<cv::Vec3b>( row, col ) = cv::Vec3f( 0, 255, 0 );
+          }
+        else if( dist_R < 0.01f )
+          {
+          pointcloud_colors.at<cv::Vec3b>( row, col ) = cv::Vec3f( 0, 0, 255 );
+          }
+        else
+          {
+          pointcloud_colors.at<cv::Vec3b>( row, col ) = cv::Vec3f( 255, 255, 255 );
+          }
+        }
+      }
+    }
+  name = "C:\\Camera_Projector_Calibration\\Color-line\\Total\\green_condition_plane\\pointcloud_BGR_plane";
+  filename = QFileDialog::getSaveFileName( this, "Save pointcloud", name + ".ply", "Pointclouds (*.ply)" );
+  if( !filename.isEmpty() )
+    {
+    std::cout << "Saving the pointcloud" << std::endl;
+    bool binary = false;
+    bool success = io_util::write_ply( filename.toStdString(), pointcloud, pointcloud_colors );
+    if( success == false )
+      {
+      qCritical() << "ERROR, saving the pointcloud failed\n";
+      return;
+      }
+    }
+
+  return;
   }
 
 void MainWindow::triangulate_stereo(const cv::Mat & K1, const cv::Mat & kc1, const cv::Mat & K2, const cv::Mat & kc2,
@@ -512,6 +886,10 @@ void MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
   cv::Mat outp2;
   cv::Point3d u2;
   cv::Point3d w2, v2;
+  unsigned char sat_max;
+  int sum;
+  double average;
+  cv::Point2i point_max;
 
   if( !mat_color_ref.data || mat_color_ref.type() != CV_8UC3 || !mat_color.data || mat_color.type() != CV_8UC3 )
     {
@@ -537,18 +915,12 @@ void MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
   //Convert the captured frame from BGR to HSV
   cv::cvtColor( mat_BGR, mat_HSV, cv::COLOR_BGR2HSV );
 
-  current_row = 0;
   cam_points.clear();
 
   cv::cvtColor( mat_BGR, mat_gray, cv::COLOR_BGR2GRAY );
   //cv::imshow( "Gray image", mat_gray );
   //cv::waitKey( 0 );
 
-  unsigned char sat_max;
-  int sum;
-  double average;
-  cv::Point2i point_max;
-  unsigned char sat;
   for( int j = 0; j < mat_HSV.cols; j++ )
     {
     //sum = mat_HSV.at< cv::Vec3b >( 0, j )[ 2 ] + mat_HSV.at< cv::Vec3b >( 1, j )[ 2 ] + mat_HSV.at< cv::Vec3b >( 2, j )[ 2 ];
@@ -559,15 +931,11 @@ void MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
       {
       sum = sum - mat_gray.at< unsigned char >( i - 2, j ) + mat_gray.at< unsigned char >( i + 1, j );
       average = sum / 3;
-      //&& average > 210 )
-      //sat = mat_HSV.at< cv::Vec3b >( i, j )[2];
-      //if( sat > sat_max && sat > 230 )
       if( average > sat_max && average > 80 )
         {
-        //std::cout << "average > sat_max ; i = " << i << std::endl;
         point_max = cv::Point2i( j, i );
         sat_max = average;
-        if( j > 800 ) // We suppose that the surface is flat after the column 865 (sheet of paper)
+        if( j > 865 ) // We suppose that the surface is flat after the column 865 (sheet of paper)
           {
           current_row = i;
           }
@@ -582,6 +950,7 @@ void MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
       }
     }
 
+  //cv::imshow( "line 800", mat_BGR );
   //cv::imshow( "Points selection with their saturation values", imageTest );
   //cv::imshow( "selected points", mat_color );
   //cv::waitKey( 0 );
@@ -646,3 +1015,763 @@ void MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
     imageTest.at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x ) = { 255,255,255 };
     }
 }
+
+std::vector<cv::Vec3f> MainWindow::get_normal_of_a_plane( std::vector<cv::Vec3f> points )
+  /*Returns a vector of 2 elements : the normal and a point of the plane */
+  {
+  std::vector<cv::Vec3f> res;
+  int n = static_cast<int>(points.size());
+  if( n < 3 )
+    {
+    std::cerr << "At least 3 points required" << std::endl;
+    return res;
+    }
+  cv::Vec3f sum = cv::Vec3f( 0, 0, 0 );
+  for( auto iter = points.begin(); iter != points.end(); ++iter )
+    {
+    sum = sum + *iter;
+    }
+  cv::Vec3f centroid = sum / n;
+  float xx = 0, xy = 0, xz = 0;
+  float yy = 0, yz = 0, zz = 0;
+
+  cv::Vec3f r;
+  for( auto iter = points.begin(); iter != points.end(); ++iter )
+    {
+    r = *iter - centroid;
+    xx += r[ 0 ] * r[ 0 ];
+    xy += r[ 0 ] * r[ 1 ];
+    xz += r[ 0 ] * r[ 2 ];
+    yy += r[ 1 ] * r[ 1 ];
+    yz += r[ 1 ] * r[ 2 ];
+    zz += r[ 2 ] * r[ 2 ];
+    }
+  float det_x = yy*zz - yz*yz;
+  float det_y = xx*zz - xz*xz;
+  float det_z = xx*yy - xy*xy;
+  float det_max = std::max( { det_x, det_y, det_z } );
+  if( det_max <= 0.0f )
+    {
+    std::cout << "The points don't span a plane" << std::endl;
+    return res;
+    }
+  cv::Vec3f normal = cv::Vec3f(0,0,0);
+  if( det_max == det_x )
+    {
+    normal[ 0 ] = 1.0;
+    normal[ 1 ] = ( xz*yz - xy*zz ) / det_x;
+    normal[ 2 ] = ( xy*yz - xz*yy ) / det_x;
+    }
+  else if( det_max == det_y )
+    {
+    normal[ 0 ] = ( yz*xz - xy*zz ) / det_y;
+    normal[ 1 ] = 1.0;
+    normal[ 2 ] = ( xy*xz - yz*xx ) / det_y;
+    }
+  else if( det_max == det_z )
+    {
+    normal[ 0 ] = ( yz*xy - xz*yy ) / det_z;
+    normal[ 1 ] = ( xz*xy - yz*xx ) / det_z;
+    normal[ 2 ] = 1.0;
+    }
+  res.push_back( normal );
+  res.push_back( centroid );
+  return res;
+  }
+
+std::vector<cv::Vec3f> MainWindow::ransac( std::vector<cv::Vec3f> points, int min, int iter, float thres, int min_inliers )
+/*  minn – the minimum number of data values required to fit the model
+    iter – the maximum number of iterations allowed in the algorithm
+    thres – a threshold value for determining when a data point fits a model
+    min_inliers – the number of close data values required to assert that a model fits well to data
+    Returns a vector of 2 elements : the normal and a point of the plane */
+  {
+  std::vector<cv::Vec3f> res;
+  int n = static_cast<int>(points.size());
+  if( n < 3 )
+    {
+    std::cerr << "At least 3 points required" << std::endl;
+    return res;
+    }
+  cv::Vec3f normal = cv::Vec3f( 0, 0, 0 );
+
+  int idx1, idx2, idx3;
+  std::vector<cv::Vec3f> sample;
+  cv::Vec3f A, B, C, AB, AC;
+  cv::Vec3f crt_vec, crt_normal=(0,0,0), best_normal=(0,0,0);
+  float distance;
+  int inliers, best_inliers = 0;
+  cv::Vec3f best_A = ( 0, 0, 0 ), best_B = ( 0, 0, 0 ), best_C = ( 0, 0, 0 );
+  /* initialize random seed: */
+  srand( time( 0 ) );
+  for( int i = 0; i < iter; i++ )
+    {
+    // Select 3 points randomly
+    sample.clear();
+    idx1 = rand() % n;
+    sample.push_back( points[ idx1 ] );
+    A = points[ idx1 ];
+    do
+      {
+      idx2 = rand() % n;
+      } while( idx2 == idx1 );
+    sample.push_back( points[ idx2 ] );
+    B = points[ idx2 ];
+    do
+      {
+      idx3 = rand() % n;
+      } while( idx3 == idx1 || idx3 == idx2);
+    sample.push_back( points[ idx3 ] );
+    C = points[ idx3 ];
+
+    AB = B - A;
+    AC = C - A;
+    crt_normal = AB.cross( AC );
+    //crt_normal_norm = crt_normal / sqrt( crt_normal[ 0 ] * crt_normal[ 0 ] + crt_normal[ 1 ] * crt_normal[ 1 ] + crt_normal[ 2 ] * crt_normal[ 2 ] );
+
+    inliers = 0;
+    for( auto crt_point = points.begin(); crt_point != points.end(); crt_point++ )
+      {
+      if( *crt_point != A && *crt_point != B && *crt_point != C )
+        {
+        crt_vec = *crt_point - A;
+        distance = std::abs( crt_normal.dot( crt_vec ) );
+        distance = distance / sqrt( crt_normal.dot( crt_normal ) );
+        if( distance < thres )
+          {
+          inliers++;
+          }
+        }
+      }
+    if( inliers > min_inliers && inliers > best_inliers )
+      //We may have found a good model
+      {
+      best_inliers = inliers;
+      best_normal = crt_normal;
+      best_A = A;
+      best_B = B;
+      best_C = C;
+      }
+    }
+  std::cout << "Ransac : best_inliers : "<<best_inliers << std::endl;
+  res.push_back( best_normal );
+  res.push_back( best_A );
+  res.push_back( best_B );
+  res.push_back( best_C );
+  return res;
+  }
+
+std::vector<cv::Vec3f> MainWindow::ransac_green_plane( std::vector<cv::Vec3f> points, int min, int iter, float thres, int min_inliers, const cv::Vec3f normal_B, const cv::Vec3f normal_R )
+/*  minn – the minimum number of data values required to fit the model
+iter – the maximum number of iterations allowed in the algorithm
+thres – a threshold value for determining when a data point fits a model
+min_inliers – the number of close data values required to assert that a model fits well to data
+Returns a vector of 2 elements : the normal and a point of the plane */
+  {
+  std::vector<cv::Vec3f> res;
+  int n = static_cast<int>( points.size() );
+  if( n < 3 )
+    {
+    std::cerr << "At least 3 points required" << std::endl;
+    return res;
+    }
+  cv::Vec3f normal = cv::Vec3f( 0, 0, 0 );
+  float orthogonal = 0.001f;
+
+  int idx1, idx2, idx3;
+  std::vector<cv::Vec3f> sample;
+  cv::Vec3f A, B, C, AB, AC;
+  cv::Vec3f crt_vec, crt_normal = ( 0, 0, 0 ), best_normal = ( 0, 0, 0 );
+  float distance;
+  int inliers, best_inliers = 0;
+  cv::Vec3f best_A = ( 0, 0, 0 ), best_B = ( 0, 0, 0 ), best_C = ( 0, 0, 0 );
+  /* initialize random seed: */
+  srand( time( 0 ) );
+  for( int i = 0; i < iter; i++ )
+    {
+    // Select 3 points randomly
+    sample.clear();
+    idx1 = rand() % n;
+    sample.push_back( points[ idx1 ] );
+    A = points[ idx1 ];
+    do
+      {
+      idx2 = rand() % n;
+      } while( idx2 == idx1 );
+    sample.push_back( points[ idx2 ] );
+    B = points[ idx2 ];
+    do
+      {
+      idx3 = rand() % n;
+      } while( idx3 == idx1 || idx3 == idx2 );
+    sample.push_back( points[ idx3 ] );
+    C = points[ idx3 ];
+
+    AB = B - A;
+    AC = C - A;
+    crt_normal = AB.cross( AC );
+    //crt_normal_norm = crt_normal / sqrt( crt_normal[ 0 ] * crt_normal[ 0 ] + crt_normal[ 1 ] * crt_normal[ 1 ] + crt_normal[ 2 ] * crt_normal[ 2 ] );
+
+    inliers = 0;
+    for( auto crt_point = points.begin(); crt_point != points.end(); crt_point++ )
+      {
+      if( *crt_point != A && *crt_point != B && *crt_point != C )
+        {
+        crt_vec = *crt_point - A;
+        distance = std::abs( crt_normal.dot( crt_vec ) );
+        distance = distance / sqrt( crt_normal.dot( crt_normal ) );
+        if( distance < thres )
+          {
+          inliers++;
+          }
+        }
+      }
+    if( inliers > min_inliers && inliers > best_inliers && abs(crt_normal.dot( normal_B )) < orthogonal && abs(crt_normal.dot( normal_R )) < orthogonal ) //We may have found a good model
+      {
+      best_inliers = inliers;
+      best_normal = crt_normal;
+      best_A = A;
+      best_B = B;
+      best_C = C;
+      }
+    }
+  std::cout << "Ransac : best_inliers : " << best_inliers << std::endl;
+  res.push_back( best_normal );
+  res.push_back( best_A );
+  res.push_back( best_B );
+  res.push_back( best_C );
+  return res;
+  }
+
+void MainWindow::density_probability( cv::Mat pointcloud, cv::Mat pointcloud_BGR, std::vector<cv::Vec3f> *points_B, std::vector<cv::Vec3f> *points_G, std::vector<cv::Vec3f> *points_R )
+  {
+  cv::Mat pointcloud_HSV;
+  cv::cvtColor( pointcloud_BGR, pointcloud_HSV, cv::COLOR_BGR2HSV );
+  cv::Mat pt_H = pointcloud_HSV.clone();
+  cv::Mat pt_HS = pointcloud_HSV.clone();
+  cv::Mat pt_HSV = pointcloud_HSV.clone();
+  cv::Mat pt_BGR = pointcloud_BGR.clone();
+
+  /*QString filename = "C:\\Camera_Projector_Calibration\\Color-line\\Test-colors\\green_cut_2.bmp";
+  if( filename.isEmpty() )
+    {
+    return;
+    }
+  cv::Mat mat_cut_BGR = cv::imread( qPrintable( filename ), CV_LOAD_IMAGE_COLOR );
+  if( !mat_cut_BGR.data || mat_cut_BGR.type() != CV_8UC3 )
+    {
+    qCritical() << "ERROR invalid cv::Mat data (color) \n";
+    return;
+    }
+
+  //cv::Mat mat_cut_HSV;
+  //cv::cvtColor( mat_cut_BGR, mat_cut_HSV, cv::COLOR_BGR2HSV );
+
+  cv::Mat cov, mean, res;
+  cv::Mat mat_split[ 3 ];
+  mat_cut_BGR = mat_cut_BGR.reshape( 0, mat_cut_BGR.cols*mat_cut_BGR.rows );
+  cv::split( mat_cut_BGR, mat_split );
+  cv::hconcat( mat_split, 3, res );
+  cv::calcCovarMatrix( res, cov, mean, CV_COVAR_NORMAL | CV_COVAR_ROWS | CV_COVAR_SCALE );
+  std::cout << std::endl;
+  std::cout << "Cov : " << cov << " cols : " << cov.cols << " rows : " << cov.rows << std::endl;
+  std::cout << "Mean : " << mean << " cols : " << mean.cols << " rows : " << mean.rows << std::endl;
+  */
+
+  /*QString filename = "C:\\Camera_Projector_Calibration\\Color-line\\Results_probability\\BGR.bmp";
+  if( filename.isEmpty() )
+    {
+    return;
+    }
+  cv::Mat mat_BGR = cv::imread( qPrintable( filename ), CV_LOAD_IMAGE_COLOR );
+  if( !mat_BGR.data || mat_BGR.type() != CV_8UC3 )
+    {
+    qCritical() << "ERROR invalid cv::Mat data\n";
+    }
+
+  cv::Mat mat_HSV;
+  cv::cvtColor( mat_BGR, mat_HSV, cv::COLOR_BGR2HSV );
+
+  cv::Mat im_H = cv::Mat::zeros( mat_HSV.rows, mat_HSV.cols, CV_8UC3 );
+  cv::Mat im_HS = cv::Mat::zeros( mat_HSV.rows, mat_HSV.cols, CV_8UC3 );
+  cv::Mat im_HSV = cv::Mat::zeros( mat_HSV.rows, mat_HSV.cols, CV_8UC3 );
+  cv::Mat im_BGR = cv::Mat::zeros( mat_BGR.rows, mat_BGR.cols, CV_8UC3 );
+  */
+  typedef itk::Vector< unsigned char, 1 > MeasurementVectorType_1;
+  typedef itk::Statistics::GaussianMembershipFunction< MeasurementVectorType_1 >
+    DensityFunctionType_1;
+  typedef itk::Vector< unsigned char, 2 > MeasurementVectorType_2;
+  typedef itk::Statistics::GaussianMembershipFunction< MeasurementVectorType_2 >
+    DensityFunctionType_2;
+  typedef itk::Vector< unsigned char, 3 > MeasurementVectorType_3;
+  typedef itk::Statistics::GaussianMembershipFunction< MeasurementVectorType_3 >
+    DensityFunctionType_3;
+
+  // H - Green - curved
+  DensityFunctionType_1::Pointer densityFunction_G_H = DensityFunctionType_1::New();
+  densityFunction_G_H->SetMeasurementVectorSize( 1 );
+  DensityFunctionType_1::MeanVectorType mean_G_H( 1 );
+  mean_G_H = 72.98385958937433;
+  DensityFunctionType_1::CovarianceMatrixType cov_G_H;
+  cov_G_H.SetSize( 1, 1 );
+  cov_G_H[ 0 ][ 0 ] = 34.79627544122293;
+  densityFunction_G_H->SetMean( mean_G_H );
+  densityFunction_G_H->SetCovariance( cov_G_H );
+  std::cout << "Green mean H: " << mean_G_H << std::endl;
+  std::cout << "Green covariance H: " << cov_G_H << std::endl;
+
+  // HS - Green - curved
+  DensityFunctionType_2::Pointer densityFunction_G_HS = DensityFunctionType_2::New();
+  densityFunction_G_HS->SetMeasurementVectorSize( 2 );
+  DensityFunctionType_2::MeanVectorType mean_G_HS( 2 );
+  mean_G_HS[ 0 ] = 72.98385958937433;
+  mean_G_HS[ 1 ] = 82.2178529726574;
+  DensityFunctionType_2::CovarianceMatrixType cov_G_HS;
+  cov_G_HS.SetSize( 2, 2 );
+  cov_G_HS[ 0 ][ 0 ] = 34.79627544122293;
+  cov_G_HS[ 0 ][ 1 ] = 20.40326202800951;
+  cov_G_HS[ 1 ][ 0 ] = 20.40326202800951;
+  cov_G_HS[ 1 ][ 1 ] = 131.1078261580129;
+  densityFunction_G_HS->SetMean( mean_G_HS );
+  densityFunction_G_HS->SetCovariance( cov_G_HS );
+  std::cout << "Green mean HS : " << mean_G_HS << std::endl;
+  std::cout << "Green covariance HS : " << cov_G_HS << std::endl;
+
+  // HSV - Green - curved
+  DensityFunctionType_3::Pointer densityFunction_G_HSV = DensityFunctionType_3::New();
+  densityFunction_G_HSV->SetMeasurementVectorSize( 3 );
+  DensityFunctionType_3::MeanVectorType mean_G_HSV( 3 );
+  mean_G_HSV[ 0 ] = 72.98385958937433;
+  mean_G_HSV[ 1 ] = 82.2178529726574;
+  mean_G_HSV[ 2 ] = 65.80364527585871;
+  DensityFunctionType_3::CovarianceMatrixType cov_G_HSV;
+  cov_G_HSV.SetSize( 3, 3 );
+  cov_G_HSV[ 0 ][ 0 ] = 34.79627544122293;
+  cov_G_HSV[ 0 ][ 1 ] = 20.40326202800951;
+  cov_G_HSV[ 0 ][ 2 ] = 2.038519719775573;
+  cov_G_HSV[ 1 ][ 0 ] = 20.40326202800951;
+  cov_G_HSV[ 1 ][ 1 ] = 131.1078261580129;
+  cov_G_HSV[ 1 ][ 2 ] = 27.84204302646776;
+  cov_G_HSV[ 2 ][ 0 ] = 2.038519719775573;
+  cov_G_HSV[ 2 ][ 1 ] = 27.84204302646776;
+  cov_G_HSV[ 2 ][ 2 ] = 38.02587875244085;
+  densityFunction_G_HSV->SetMean( mean_G_HSV );
+  densityFunction_G_HSV->SetCovariance( cov_G_HSV );
+  std::cout << "Green mean HSV : " << mean_G_HSV << std::endl;
+  std::cout << "Green covariance HSV : " << cov_G_HSV << std::endl;
+
+  // BGR - Green - curved
+  DensityFunctionType_3::Pointer densityFunction_G_BGR = DensityFunctionType_3::New();
+  densityFunction_G_BGR->SetMeasurementVectorSize( 3 );
+  DensityFunctionType_3::MeanVectorType mean_G_BGR( 3 );
+  mean_G_BGR[ 0 ] = 53.91532061885764;
+  mean_G_BGR[ 1 ] = 65.79425537608252;
+  mean_G_BGR[ 2 ] = 44.53785151308747;
+  DensityFunctionType_3::CovarianceMatrixType cov_G_BGR;
+  cov_G_BGR.SetSize( 3, 3 );
+  cov_G_BGR[ 0 ][ 0 ] = 32.87146616410637;
+  cov_G_BGR[ 0 ][ 1 ] = 26.84658224589317;
+  cov_G_BGR[ 0 ][ 2 ] = 15.02046465692957;
+  cov_G_BGR[ 1 ][ 0 ] = 26.84658224589317;
+  cov_G_BGR[ 1 ][ 1 ] = 37.15121420178843;
+  cov_G_BGR[ 1 ][ 2 ] = 18.63856216879524;
+  cov_G_BGR[ 2 ][ 0 ] = 15.02046465692957;
+  cov_G_BGR[ 2 ][ 1 ] = 18.63856216879524;
+  cov_G_BGR[ 2 ][ 2 ] = 17.51177637067411;
+  densityFunction_G_BGR->SetMean( mean_G_BGR );
+  densityFunction_G_BGR->SetCovariance( cov_G_BGR );
+  std::cout << "Green mean BGR : " << mean_G_BGR << std::endl;
+  std::cout << "Green covariance BGR : " << cov_G_BGR << std::endl;
+
+  // H - Blue - curved
+  DensityFunctionType_1::Pointer densityFunction_B_H = DensityFunctionType_1::New();
+  densityFunction_B_H->SetMeasurementVectorSize( 1 );
+  DensityFunctionType_1::MeanVectorType mean_B_H( 1 );
+  mean_B_H = 111.6993405275779;
+  DensityFunctionType_1::CovarianceMatrixType cov_B_H;
+  cov_B_H.SetSize( 1, 1 );
+  cov_B_H[ 0 ][ 0 ] = 2.254388054304088;
+  densityFunction_B_H->SetMean( mean_B_H );
+  densityFunction_B_H->SetCovariance( cov_B_H );
+  std::cout << "Blue mean H : " << mean_B_H << std::endl;
+  std::cout << "Blue covariance H : " << cov_B_H << std::endl;
+
+  // HS - Blue - curved
+  DensityFunctionType_2::Pointer densityFunction_B_HS = DensityFunctionType_2::New();
+  densityFunction_B_HS->SetMeasurementVectorSize( 2 );
+  DensityFunctionType_2::MeanVectorType mean_B_HS( 2 );
+  mean_B_HS[ 0 ] = 111.6993405275779;
+  mean_B_HS[ 1 ] = 151.1834757194245;
+  DensityFunctionType_2::CovarianceMatrixType cov_B_HS;
+  cov_B_HS.SetSize( 2, 2 );
+  cov_B_HS[ 0 ][ 0 ] = 2.254388054304088;
+  cov_B_HS[ 0 ][ 1 ] = -1.49583298963347;
+  cov_B_HS[ 1 ][ 0 ] = -1.49583298963347;
+  cov_B_HS[ 1 ][ 1 ] = 98.81417089298498;
+  densityFunction_B_HS->SetMean( mean_B_HS );
+  densityFunction_B_HS->SetCovariance( cov_B_HS );
+  std::cout << "Blue mean HS : " << mean_B_HS << std::endl;
+  std::cout << "Blue covariance HS : " << cov_B_HS << std::endl;
+
+  // HSV - Blue - curved
+  DensityFunctionType_3::Pointer densityFunction_B_HSV = DensityFunctionType_3::New();
+  densityFunction_B_HSV->SetMeasurementVectorSize( 3 );
+  DensityFunctionType_3::MeanVectorType mean_B_HSV( 3 );
+  mean_B_HSV[ 0 ] = 111.6993405275779;
+  mean_B_HSV[ 1 ] = 151.1834757194245;
+  mean_B_HSV[ 2 ] = 81.12778027577937;
+  DensityFunctionType_3::CovarianceMatrixType cov_B_HSV;
+  cov_B_HSV.SetSize( 3, 3 );
+  cov_B_HSV[ 0 ][ 0 ] = 2.254388054304088;
+  cov_B_HSV[ 0 ][ 1 ] = -1.49583298963347;
+  cov_B_HSV[ 0 ][ 2 ] = 2.613395868287418;
+  cov_B_HSV[ 1 ][ 0 ] = -1.49583298963347;
+  cov_B_HSV[ 1 ][ 1 ] = 98.81417089298498;
+  cov_B_HSV[ 1 ][ 2 ] = 35.66537436680942;
+  cov_B_HSV[ 2 ][ 0 ] = 2.613395868287418;
+  cov_B_HSV[ 2 ][ 1 ] = 35.66537436680942;
+  cov_B_HSV[ 2 ][ 2 ] = 51.2291083521874;
+  densityFunction_B_HSV->SetMean( mean_B_HSV );
+  densityFunction_B_HSV->SetCovariance( cov_B_HSV );
+  std::cout << "Blue mean HSV : " << mean_B_HSV << std::endl;
+  std::cout << "Blue covariance HSV : " << cov_B_HSV << std::endl;
+
+  // BGR - Blue - curved
+  DensityFunctionType_3::Pointer densityFunction_B_BGR = DensityFunctionType_3::New();
+  densityFunction_B_BGR->SetMeasurementVectorSize( 3 );
+  DensityFunctionType_3::MeanVectorType mean_B_BGR( 3 );
+  mean_B_BGR[ 0 ] = 81.12688848920864;
+  mean_B_BGR[ 1 ] = 46.22345623501199;
+  mean_B_BGR[ 2 ] = 32.8949340527578;
+  DensityFunctionType_3::CovarianceMatrixType cov_B_BGR;
+  cov_B_BGR.SetSize( 3, 3 );
+  cov_B_BGR[ 0 ][ 0 ] = 51.13153120578004;
+  cov_B_BGR[ 0 ][ 1 ] = 18.96356743876536;
+  cov_B_BGR[ 0 ][ 2 ] = 11.71003429720219;
+  cov_B_BGR[ 1 ][ 0 ] = 18.96356743876536;
+  cov_B_BGR[ 1 ][ 1 ] = 15.15898517674382;
+  cov_B_BGR[ 1 ][ 2 ] = 12.24514280886434;
+  cov_B_BGR[ 2 ][ 0 ] = 11.71003429720219;
+  cov_B_BGR[ 2 ][ 1 ] = 12.24514280886434;
+  cov_B_BGR[ 2 ][ 2 ] = 15.71471054720592;
+  densityFunction_B_BGR->SetMean( mean_B_BGR );
+  densityFunction_B_BGR->SetCovariance( cov_B_BGR );
+  std::cout << "Blue mean BGR : " << mean_B_BGR << std::endl;
+  std::cout << "Blue covariance BGR : " << cov_B_BGR << std::endl;
+
+  // H - Red - curved
+  DensityFunctionType_1::Pointer densityFunction_R_H = DensityFunctionType_1::New();
+  densityFunction_R_H->SetMeasurementVectorSize( 1 );
+  DensityFunctionType_1::MeanVectorType mean_R_H( 1 );
+  mean_R_H = 3.364871626069783;
+  DensityFunctionType_1::CovarianceMatrixType cov_R_H;
+  cov_R_H.SetSize( 1, 1 );
+  cov_R_H[ 0 ][ 0 ] = 7.350805497013114;
+  densityFunction_R_H->SetMean( mean_R_H );
+  densityFunction_R_H->SetCovariance( cov_R_H );
+  std::cout << "Red mean H : " << mean_R_H << std::endl;
+  std::cout << "Red covariance H : " << cov_R_H << std::endl;
+
+  // HS - Red - curved
+  DensityFunctionType_2::Pointer densityFunction_R_HS = DensityFunctionType_2::New();
+  densityFunction_R_HS->SetMeasurementVectorSize( 2 );
+  DensityFunctionType_2::MeanVectorType mean_R_HS( 2 );
+  mean_R_HS[ 0 ] = 3.364871626069783;
+  mean_R_HS[ 1 ] = 172.6820803159974;
+  DensityFunctionType_2::CovarianceMatrixType cov_R_HS;
+  cov_R_HS.SetSize( 2, 2 );
+  cov_R_HS[ 0 ][ 0 ] = 7.350805497013114;
+  cov_R_HS[ 0 ][ 1 ] = 2.897500859552892;
+  cov_R_HS[ 1 ][ 0 ] = 2.897500859552892;
+  cov_R_HS[ 1 ][ 1 ] = 75.00934182106379;
+  densityFunction_R_HS->SetMean( mean_R_HS );
+  densityFunction_R_HS->SetCovariance( cov_R_HS );
+  std::cout << "Red mean HS : " << mean_R_HS << std::endl;
+  std::cout << "Red covariance HS : " << cov_R_HS << std::endl;
+
+  // HSV - Red - curved
+  DensityFunctionType_3::Pointer densityFunction_R_HSV = DensityFunctionType_3::New();
+  densityFunction_R_HSV->SetMeasurementVectorSize( 3 );
+  DensityFunctionType_3::MeanVectorType mean_R_HSV( 3 );
+  mean_R_HSV[ 0 ] = 3.364871626069783;
+  mean_R_HSV[ 1 ] = 172.6820803159974;
+  mean_R_HSV[ 2 ] = 116.4342857142857;
+  DensityFunctionType_3::CovarianceMatrixType cov_R_HSV;
+  cov_R_HSV.SetSize( 3, 3 );
+  cov_R_HSV[ 0 ][ 0 ] = 7.350805497013114;
+  cov_R_HSV[ 0 ][ 1 ] = 2.897500859552892;
+  cov_R_HSV[ 0 ][ 2 ] = -2.223330160819627;
+  cov_R_HSV[ 1 ][ 0 ] = 2.897500859552892;
+  cov_R_HSV[ 1 ][ 1 ] = 75.00934182106379;
+  cov_R_HSV[ 1 ][ 2 ] = -27.76387409009764;
+  cov_R_HSV[ 2 ][ 0 ] = -2.223330160819627;
+  cov_R_HSV[ 2 ][ 1 ] = -27.76387409009764;
+  cov_R_HSV[ 2 ][ 2 ] = 93.23570138241101;
+  densityFunction_R_HSV->SetMean( mean_R_HSV );
+  densityFunction_R_HSV->SetCovariance( cov_R_HSV );
+  std::cout << "Red mean HSV : " << mean_R_HSV << std::endl;
+  std::cout << "Red covariance HSV : " << cov_R_HSV << std::endl;
+
+  // BGR - Red - curved
+  DensityFunctionType_3::Pointer densityFunction_R_BGR = DensityFunctionType_3::New();
+  densityFunction_R_BGR->SetMeasurementVectorSize( 3 );
+  DensityFunctionType_3::MeanVectorType mean_R_BGR( 3 );
+  mean_R_BGR[ 0 ] = 37.69092824226465;
+  mean_R_BGR[ 1 ] = 46.39889400921659;
+  mean_R_BGR[ 2 ] = 116.4342857142857;
+  DensityFunctionType_3::CovarianceMatrixType cov_R_BGR;
+  cov_R_BGR.SetSize( 3, 3 );
+  cov_R_BGR[ 0 ][ 0 ] = 35.28504081051287;
+  cov_R_BGR[ 0 ][ 1 ] = 29.05505777448908;
+  cov_R_BGR[ 0 ][ 2 ] = 43.80816883288441;
+  cov_R_BGR[ 1 ][ 0 ] = 29.05505777448908;
+  cov_R_BGR[ 1 ][ 1 ] = 28.58625552464882;
+  cov_R_BGR[ 1 ][ 2 ] = 42.04286214615217;
+  cov_R_BGR[ 2 ][ 0 ] = 43.80816883288441;
+  cov_R_BGR[ 2 ][ 1 ] = 42.04286214615217;
+  cov_R_BGR[ 2 ][ 2 ] = 93.23570138241101;
+  densityFunction_R_BGR->SetMean( mean_R_BGR );
+  densityFunction_R_BGR->SetCovariance( cov_R_BGR );
+  std::cout << "Red mean BGR : " << mean_R_BGR << std::endl;
+  std::cout << "Red covariance BGR : " << cov_R_BGR << std::endl;
+
+  MeasurementVectorType_1 mv_H;
+  mv_H.Fill( 0 );
+  MeasurementVectorType_2 mv_HS;
+  mv_HS.Fill( 0 );
+  MeasurementVectorType_3 mv_HSV;
+  mv_HSV.Fill( 0 );
+  MeasurementVectorType_3 mv_BGR;
+  mv_BGR.Fill( 0 );
+
+  double res_H = 0, res_HS = 0, res_HSV = 0, res_BGR = 0;
+  double res_H_G = 0, res_HS_G = 0, res_HSV_G = 0, res_BGR_G = 0;
+  double res_H_B = 0, res_HS_B = 0, res_HSV_B = 0, res_BGR_B = 0;
+  double res_H_R = 0, res_HS_R = 0, res_HSV_R = 0, res_BGR_R = 0;
+
+  // we don't take into account the 2 pixels on the borders
+  for( int row = 2; row < pointcloud_BGR.rows-2; row++ )
+    {
+    for( int col = 2; col < pointcloud_BGR.cols-2; col++ )
+      {
+      cv::Vec3f crt = pointcloud.at<cv::Vec3f>( row, col );
+      cv::Vec3b crt_HSV = pointcloud_HSV.at<cv::Vec3b>( row, col );
+      cv::Vec3b crt_BGR = pointcloud_BGR.at<cv::Vec3b>( row, col );
+      //cv::Vec3b crt_HSV = mat_HSV.at<cv::Vec3b>( row, col );
+      //cv::Vec3b crt_BGR = mat_BGR.at<cv::Vec3b>( row, col );
+      if( crt[ 2 ] > 0 )
+        {
+        mv_H = crt_HSV[ 0 ];
+        mv_HS[ 0 ] = crt_HSV[ 0 ];
+        mv_HS[ 1 ] = crt_HSV[ 1 ];
+        mv_HSV[ 0 ] = crt_HSV[ 0 ];
+        mv_HSV[ 1 ] = crt_HSV[ 1 ];
+        mv_HSV[ 2 ] = crt_HSV[ 2 ];
+        mv_BGR[ 0 ] = crt_BGR[ 0 ];
+        mv_BGR[ 1 ] = crt_BGR[ 1 ];
+        mv_BGR[ 2 ] = crt_BGR[ 2 ];
+        res_H_G = densityFunction_G_H->Evaluate( mv_H );
+        res_HS_G = densityFunction_G_HS->Evaluate( mv_HS );
+        res_HSV_G = densityFunction_G_HSV->Evaluate( mv_HSV );
+        res_BGR_G = densityFunction_G_BGR->Evaluate( mv_BGR );
+
+        res_H_B = densityFunction_B_H->Evaluate( mv_H );
+        res_HS_B = densityFunction_B_HS->Evaluate( mv_HS );
+        res_HSV_B = densityFunction_B_HSV->Evaluate( mv_HSV );
+        res_BGR_B = densityFunction_B_BGR->Evaluate( mv_BGR );
+
+        res_H_R = densityFunction_R_H->Evaluate( mv_H );
+        res_HS_R = densityFunction_R_HS->Evaluate( mv_HS );
+        res_HSV_R = densityFunction_R_HSV->Evaluate( mv_HSV );
+        res_BGR_R = densityFunction_R_BGR->Evaluate( mv_BGR );
+
+        res_H = std::max( { res_H_G, res_H_B, res_H_R } );
+        res_HS = std::max( { res_HS_G, res_HS_B, res_HS_R } );
+        res_HSV = std::max( { res_HSV_G, res_HSV_B, res_HSV_R } );
+        res_BGR = std::max( { res_BGR_G, res_BGR_B, res_BGR_R } );
+
+        /*if( res_H > 5e-2 )
+          {
+          if( res_H == res_H_G )
+            {
+            pt_H.at<cv::Vec3b>( row, col ) = cv::Vec3b( 0, 255, 0 );
+            }
+          else if( res_H == res_H_B )
+            {
+            pt_H.at<cv::Vec3b>( row, col ) = cv::Vec3b( 255, 0, 0 );
+            }
+          else if( res_H == res_H_R )
+            {
+            pt_H.at<cv::Vec3b>( row, col ) = cv::Vec3b( 0, 0, 255 );
+            }
+          }
+        else
+          {
+          pt_H.at<cv::Vec3b>( row, col ) = cv::Vec3b( 255, 255, 255 );
+          }
+
+        if( res_HS > 1e-4 )
+          {
+          if( res_HS == res_HS_G && res_HS > 1e-4)
+            {
+            pt_HS.at<cv::Vec3b>( row, col ) = cv::Vec3b( 0, 255, 0 );
+            }
+          else if( res_HS == res_HS_B )
+            {
+            pt_HS.at<cv::Vec3b>( row, col ) = cv::Vec3b( 255, 0, 0 );
+            }
+          else if( res_HS == res_HS_R )
+            {
+            pt_HS.at<cv::Vec3b>( row, col ) = cv::Vec3b( 0, 0, 255 );
+            }
+          }
+        else
+          {
+          pt_HS.at<cv::Vec3b>( row, col ) = cv::Vec3b( 255, 255, 255 );
+          }
+
+        if( res_HSV > 1e-60 )
+          {
+          if( res_HSV == res_HSV_G )
+            {
+            pt_HSV.at<cv::Vec3b>( row, col ) = cv::Vec3b( 0, 255, 0 );
+            }
+          else if( res_HSV == res_HSV_B )
+            {
+            pt_HSV.at<cv::Vec3b>( row, col ) = cv::Vec3b( 255, 0, 0 );
+            }
+          else if( res_HSV == res_HSV_R )
+            {
+            pt_HSV.at<cv::Vec3b>( row, col ) = cv::Vec3b( 0, 0, 255 );
+            }
+          }
+        else
+          {
+          pt_HSV.at<cv::Vec3b>( row, col ) = cv::Vec3b( 255, 255, 255 );
+          }
+          */
+        if( res_BGR > 1e-95 )
+          {
+          if( res_BGR == res_BGR_G )
+            {
+            pt_BGR.at<cv::Vec3b>( row, col ) = cv::Vec3b( 0, 255, 0 );
+            ( *points_G ).push_back( crt );
+            }
+          else if( res_BGR == res_BGR_B )
+            {
+            pt_BGR.at<cv::Vec3b>( row, col ) = cv::Vec3b( 255, 0, 0 );
+            ( *points_B ).push_back( crt );
+            }
+          else if( res_BGR == res_BGR_R )
+            {
+            pt_BGR.at<cv::Vec3b>( row, col ) = cv::Vec3b( 0, 0, 255 );
+            ( *points_R ).push_back( crt );
+            }
+          }
+        else
+          {
+          pt_BGR.at<cv::Vec3b>( row, col ) = cv::Vec3b( 255, 255, 255 );
+          }
+        }
+
+        /*im_H.at<unsigned char>( row, col ) = res_H * 255 * 3;
+        im_HS.at<unsigned char>( row, col ) = res_HS * 255 * 1e2;
+        im_HSV.at<unsigned char>( row, col ) = res_HSV * 255 * 1e5;
+        im_BGR.at<unsigned char>( row, col ) = res_BGR * 255 * 1e30;*/
+      }
+    }
+
+  std::cout << "Done" << std::endl;
+  /*
+  QString name = "C:\\Camera_Projector_Calibration\\Color-line\\Results_probability\\probe\\pointcloud_BGR_H";
+  QString filename = QFileDialog::getSaveFileName( this, "Save pointcloud", name + ".ply", "Pointclouds (*.ply)" );
+  if( !filename.isEmpty() )
+    {
+    std::cout << "Saving the pointcloud" << std::endl;
+    bool binary = false;
+    bool success = io_util::write_ply( filename.toStdString(), pointcloud, pt_H );
+    if( success == false )
+      {
+      qCritical() << "ERROR, saving the pointcloud failed\n";
+      return;
+      }
+    }
+  name = "C:\\Camera_Projector_Calibration\\Color-line\\Results_probability\\probe\\pointcloud_BGR_HS";
+  filename = QFileDialog::getSaveFileName( this, "Save pointcloud", name + ".ply", "Pointclouds (*.ply)" );
+  if( !filename.isEmpty() )
+    {
+    std::cout << "Saving the pointcloud" << std::endl;
+    bool binary = false;
+    bool success = io_util::write_ply( filename.toStdString(), pointcloud, pt_HS );
+    if( success == false )
+      {
+      qCritical() << "ERROR, saving the pointcloud failed\n";
+      return;
+      }
+    }
+  name = "C:\\Camera_Projector_Calibration\\Color-line\\Results_probability\\probe\\pointcloud_BGR_HSV";
+  filename = QFileDialog::getSaveFileName( this, "Save pointcloud", name + ".ply", "Pointclouds (*.ply)" );
+  if( !filename.isEmpty() )
+    {
+    std::cout << "Saving the pointcloud" << std::endl;
+    bool binary = false;
+    bool success = io_util::write_ply( filename.toStdString(), pointcloud, pt_HSV );
+    if( success == false )
+      {
+      qCritical() << "ERROR, saving the pointcloud failed\n";
+      return;
+      }
+    }
+    */
+  QString name = "C:\\Camera_Projector_Calibration\\Color-line\\Total\\green_condition_plane\\pointcloud_BGR_BGR";
+  QString filenameBGR = QFileDialog::getSaveFileName( this, "Save pointcloud", name + ".ply", "Pointclouds (*.ply)" );
+  if( !filenameBGR.isEmpty() )
+    {
+    std::cout << "Saving the pointcloud" << std::endl;
+    bool binary = false;
+    bool success = io_util::write_ply( filenameBGR.toStdString(), pointcloud, pt_BGR );
+    if( success == false )
+      {
+      qCritical() << "ERROR, saving the pointcloud failed\n";
+      return;
+      }
+    }
+
+    /*cv::namedWindow( "original", cv::WINDOW_NORMAL );
+    cv::imshow( "original", mat_BGR );
+    cv::namedWindow( "H", cv::WINDOW_NORMAL );
+    cv::imshow( "H", im_H );
+    cv::namedWindow( "HS", cv::WINDOW_NORMAL );
+    cv::imshow( "HS", im_HS );
+    cv::namedWindow( "HSV", cv::WINDOW_NORMAL );
+    cv::imshow( "HSV", im_HSV );
+    cv::namedWindow( "BGR", cv::WINDOW_NORMAL );
+    cv::imshow( "BGR", im_BGR );
+    cv::waitKey( 0 );*/
+  }
+
+  cv::Vec3f MainWindow::three_planes_intersection( cv::Vec3f n1, cv::Vec3f n2, cv::Vec3f n3, cv::Vec3f x1, cv::Vec3f x2, cv::Vec3f x3 )
+ // Input : 3 planes defined by their nrmal n and a point x
+ {
+    cv::Mat mat;
+    cv::hconcat( n1, n2, mat );
+    cv::hconcat( mat, n3, mat );
+
+    std::cout << "n1 : " << n1 << std::endl;
+    std::cout << "n2 : " << n2 << std::endl;
+    std::cout << "n3 : " << n3 << std::endl;
+    std::cout << "mat : " << mat << std::endl;
+
+    double det = cv::determinant( mat );
+    if( det == 0 )
+      {
+      std::cout << "2 planes are parallel" << std::endl;
+      return cv::Vec3f( 0, 0, 0 );
+      }
+    cv::Vec3f a, b, c;
+    a = ( x1.dot(n1) )*( n2.cross( n3 ) );
+    b = ( x2.dot( n2 ) )*( n3.cross( n1 ) );
+    c = ( x3.dot( n3 ) )*( n1.cross( n2 ) );
+
+    return ( 1 / det )*( a + b + c );
+ }
