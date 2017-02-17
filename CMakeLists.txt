@@ -31,11 +31,20 @@ list(INSERT CMAKE_MODULE_PATH 0 ${AnatomicAugmentedRealityProjector_SOURCE_DIR}/
 
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Concurrent REQUIRED)
-find_package(opencv REQUIRED)
+find_package(OpenCV REQUIRED)
 find_package(FlyCapture REQUIRED)
 
 find_package(ITK REQUIRED)
-INCLUDE(${ITK_USE_FILE})
+include(${ITK_USE_FILE})
+
+# if(ITKVtkGlue_LOADED)
+  # find_package(VTK REQUIRED)
+  # include(${VTK_USE_FILE})
+# else()
+  # find_package(ItkVtkGlue REQUIRED)
+  # include(${ItkVtkGlue_USE_FILE})
+  # set(Glue ItkVtkGlue)
+# endif()
 
 set( source_files
   src/CalibrationData.cpp
@@ -55,8 +64,10 @@ set( include_files
   )
 
 qt5_wrap_ui( ui_files ${AnatomicAugmentedRealityProjector_SOURCE_DIR}/form/MainWindow.ui )
-qt5_wrap_cpp( moc_files ${AnatomicAugmentedRealityProjector_SOURCE_DIR}/include/MainWindow.hpp
-  ${AnatomicAugmentedRealityProjector_SOURCE_DIR}/include/ProjectorWidget.hpp )
+qt5_wrap_cpp( moc_files
+  ${AnatomicAugmentedRealityProjector_SOURCE_DIR}/include/MainWindow.hpp
+  ${AnatomicAugmentedRealityProjector_SOURCE_DIR}/include/ProjectorWidget.hpp
+  )
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} ${FLYCAPTURE_INCLUDE_DIR} include)
 
@@ -67,9 +78,12 @@ add_executable( AnatomicAugmentedRealityProjector
   ${moc_files}
   )
 
+
 target_link_libraries( AnatomicAugmentedRealityProjector
   Qt5::Widgets Qt5::Concurrent 
   ${OpenCV_LIBS} 
   ${FLYCAPTURE2_LIB}
   ${ITK_LIBRARIES}
+  #${VTK_LIBRARIES}
+  #${Glue}
   )
