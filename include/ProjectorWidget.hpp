@@ -53,17 +53,17 @@ public:
   int GetHeight() const { return this->Height; };
   int GetLineThickness() const { return this->LineThickness; };
   int GetRow() const { return this->Row; };
-  int GetBlueColor() { return this->BlueColor; };
-  int GetGreenColor() { return this->GreenColor; };
-  int GetRedColor() { return this->RedColor; };
+  unsigned char GetBlueColor() { return this->BlueColor; };
+  unsigned char GetGreenColor() { return this->GreenColor; };
+  unsigned char GetRedColor() { return this->RedColor; };
   void SetPixmap(QPixmap image) { this->Pixmap = image; };
   void SetWidth(int x) { this->Width = x; };
   void SetHeight(int y) { this->Height = y; };
   void SetLineThickness(int thickness) { this->LineThickness = thickness; };
   void SetRow(int r) { this->Row = r; };
-  void SetBlueColor( int blue ) { this->BlueColor = blue; };
-  void SetGreenColor( int green ) { this->GreenColor = green; };
-  void SetRedColor( int red ) { this->RedColor = red; };
+  void SetBlueColor( unsigned char blue ) { this->BlueColor = blue; };
+  void SetGreenColor( unsigned char green ) { this->GreenColor = green; };
+  void SetRedColor( unsigned char red ) { this->RedColor = red; };
 
   void start();
 
@@ -79,9 +79,9 @@ private:
   int Width;
   int LineThickness;
   int Row;
-  int BlueColor;
-  int GreenColor;
-  int RedColor;
+  unsigned char BlueColor;
+  unsigned char GreenColor;
+  unsigned char RedColor;
 };
 
 #endif  /* __PROJECTOR_HPP__ */
