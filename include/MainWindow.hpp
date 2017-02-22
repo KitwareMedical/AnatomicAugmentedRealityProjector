@@ -59,7 +59,7 @@ public:
   ~MainWindow();
   cv::Point3d approximate_ray_plane_intersection( const cv::Mat & Rt, const cv::Mat & T,
     const cv::Point3d & vc, const cv::Point3d & qc, const cv::Point3d & vp, const cv::Point3d & qp );
-  bool ComputePointCloud( cv::Mat *pointcloud, cv::Mat *pointcloud_colors, cv::Mat mat_color_ref, cv::Mat mat_color, cv::Mat imageTest );
+  bool ComputePointCloud( cv::Mat *pointcloud, cv::Mat *pointcloud_colors, cv::Mat mat_color_ref, cv::Mat mat_color, cv::Mat imageTest, cv::Mat color_image );
   cv::Mat GetCurrentMat() const { return this->CurrentMat; };
   void SetCurrentMat( cv::Mat currentMat ) { this->CurrentMat = currentMat; };
   int GetTimerShots() const { return this->TimerShots; };
@@ -71,7 +71,7 @@ public:
   void save_pointcloud_plane_intersection( cv::Mat pointcloud, cv::Mat pointcloud_colors, cv::Vec3f normal_B, cv::Vec3f normal_G, cv::Vec3f normal_R, cv::Vec3f A_B, cv::Vec3f A_G, cv::Vec3f A_R, cv::Vec3f intersection, float size_circles, QString name );
   void save_pointcloud_centers( cv::Mat pointcloud, cv::Mat pointcloud_colors, cv::Vec3f center_B, cv::Vec3f center_G, cv::Vec3f center_R, float size_circles, QString name );
   void save_pointcloud( cv::Mat pointcloud, cv::Mat pointcloud_colors, QString name );
-
+  void get_true_colors( cv::Mat *pointcloud_colors );
 
 protected slots:
   void on_proj_display_clicked();
