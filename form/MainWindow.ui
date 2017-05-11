@@ -401,6 +401,23 @@
               </property>
              </widget>
             </item>
+             <item>
+               <widget class="QLabel" name="label_td">
+                 <property name="text">
+                   <string>Trigger Delay (ms) </string>
+                 </property>
+               </widget>
+             </item>
+             <item>
+               <widget class="QDoubleSpinBox" name="trigger_delay">
+                 <property name="maximum">
+                   <double>16</double>
+                 </property>
+                 <property name="value">
+                   <double>0.0</double>
+                 </property>
+               </widget>
+             </item>
            </layout>
           </item>
           <item>

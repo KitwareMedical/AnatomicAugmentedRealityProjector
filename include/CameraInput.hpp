@@ -37,6 +37,10 @@ public :
   ~CameraInput();
 
   bool Run(); // return true if a camera was found and successfully started
+  
+  void SetCameraTriggerDelay(double delay);
+  void IncrementTriggerDelay();
+  
   void SetCameraFrameRate(double framerate);
   double GetCameraFrameRate();
   void FindTopBottomLines( cv::Mat mat_color_ref, cv::Mat mat_color );
@@ -63,6 +67,8 @@ public :
 
 private :
   //double FrameRate;
+  double delay = 0;
+	
   int NbImages;
   int TopLine;
   int BottomLine;

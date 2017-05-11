@@ -57,9 +57,9 @@ class MainWindow : public QMainWindow
 public:
   explicit MainWindow( QWidget *parent = 0 );
   ~MainWindow();
-  cv::Point3d approximate_ray_plane_intersection( const cv::Mat & Rt, const cv::Mat & T,
-    const cv::Point3d & vc, const cv::Point3d & qc, const cv::Point3d & vp, const cv::Point3d & qp );
-  bool ComputePointCloud( cv::Mat *pointcloud, cv::Mat *pointcloud_colors, cv::Mat mat_color_ref, cv::Mat mat_color, cv::Mat imageTest, cv::Mat color_image );
+  cv::Point3d approximate_ray_plane_intersection(const cv::Mat & T, const cv::Point3d & vc, const cv::Point3d & vp);
+
+  bool ComputePointCloud( cv::Mat *pointcloud, cv::Mat *pointcloud_colors, cv::Mat mat_color_ref, cv::Mat mat_color, cv::Mat imageTest, cv::Mat color_image, double delay );
   cv::Mat GetCurrentMat() const { return this->CurrentMat; };
   void SetCurrentMat( cv::Mat currentMat ) { this->CurrentMat = currentMat; };
   int GetTimerShots() const { return this->TimerShots; };
@@ -88,6 +88,7 @@ protected slots:
   void SetProjectorWidth();
   void SetProjectorLineThickness();
   void SetProjectorLineRow();
+  void SetCameraTriggerDelay();
   void SetCameraFrameRate();
   void SetCameraNbImages();
   void SetProjectorBlueColor();

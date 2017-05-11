@@ -113,6 +113,54 @@ bool CameraInput::Run()
   }
   return true;
 }
+void CameraInput::IncrementTriggerDelay(){
+	this->delay += .0002;
+	if (this->delay > .011){
+		this->delay = 0;
+	}
+	this->SetCameraTriggerDelay(this->delay);
+}
+void CameraInput::SetCameraTriggerDelay(double delay)
+{
+	Error error;
+
+	// Check if the camera supports the FRAME_RATE property
+	std::cout << "Detecting trigger delay from camera... " << std::endl;
+	PropertyInfo propInfo;
+	propInfo.type = TRIGGER_DELAY;
+	error = this->Camera.GetPropertyInfo(&propInfo);
+	if (error != PGRERROR_OK)
+	{
+		error.PrintErrorTrace();
+		return;
+	}
+	if (propInfo.present == true)
+	{
+		// Get the trigger delay
+		Property prop;
+		prop.type = TRIGGER_DELAY;
+		error = this->Camera.GetProperty(&prop);
+		if (error != PGRERROR_OK)
+		{
+			error.PrintErrorTrace();
+		}
+		else
+		{
+			prop.autoManualMode = false;
+			// Set the frame rate.
+			// Note that the actual recording frame rate may be slower,
+			// depending on the bus speed and disk writing speed.
+			prop.absValue = delay;
+			error = this->Camera.SetProperty(&prop);
+			if (error != PGRERROR_OK)
+			{
+				error.PrintErrorTrace();
+				return;
+			}
+		}
+	}
+	this->delay = delay;
+}
 
 void CameraInput::SetCameraFrameRate(double frameRate)
 {
