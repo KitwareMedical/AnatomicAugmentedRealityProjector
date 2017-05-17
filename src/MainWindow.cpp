@@ -1210,7 +1210,7 @@ bool MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
   distortedProjectorPoints.at<cv::Vec2d>( 0, 0 ) = cv::Vec2d( this->Projector.GetWidth(), row );
   distortedProjectorPoints.at<cv::Vec2d>(0, 1) = cv::Vec2d(0, row);
 
-  cv::undistortPoints( distortedProjectorPoints, undistortedProjectorPoints, this->Calib.Proj_K, this->Calib.Proj_kc );
+  cv::undistortPoints(distortedProjectorPoints, undistortedProjectorPoints, this->Calib.Proj_K , this->Calib.Proj_kc );
   assert( undistortedProjectorPoints.type() == CV_64FC2 && undistortedProjectorPoints.rows == 1 && undistortedProjectorPoints.cols == 2 );
   const cv::Vec2d & outvec2 = undistortedProjectorPoints.at<cv::Vec2d>( 0, 0 );
   projectorVector1 = cv::Point3d( outvec2[ 0 ], outvec2[ 1 ], 1.0 );
@@ -1221,9 +1221,12 @@ bool MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
 
 
   //to world coordinates
-  projectorNormal = cv::Point3d( cv::Mat( this->Calib.R.t()*( cv::Mat( projectorVector1 ).cross(cv::Mat(projectorVector2))) ) );
+  projectorNormal = cv::Point3d( cv::Mat( this->Calib.R*( cv::Mat( projectorVector1 ).cross(cv::Mat(projectorVector2))) ) );
   // world rays = normal vector
   v2 = projectorVector1;
+
+  std::cout << "p1:" << projectorVector1 << "\np2:" << projectorVector2 << "\n pn:" << projectorNormal << std::endl;
+
 
   it_cam_points = cam_points.begin();
   for( it_cam_points; it_cam_points != cam_points.end(); ++it_cam_points )
@@ -1235,17 +1238,20 @@ bool MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
     const cv::Vec2d & outvec1 = outp1.at<cv::Vec2d>( 0, 0 );
     cameraVector = cv::Point3d( outvec1[ 0 ], outvec1[ 1 ], 1 );
     //to world coordinates
+
     
 
     p = approximate_ray_plane_intersection(this->Calib.T, cameraVector, projectorNormal);
 
-	std::cout << p << std::endl;
+	
 
     cv::Vec3f & cloud_point = (*pointcloud).at<cv::Vec3f>( ( *it_cam_points ).y, ( *it_cam_points ).x );
     cloud_point[ 0 ] = p.x;
     cloud_point[ 1 ] = p.y;
     cloud_point[ 2 ] = p.z;
 
+
+	//std::cout << cloud_point << std::endl;
     double B = mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y - 1, ( *it_cam_points ).x )[ 0 ] + mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x )[ 0 ] + mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y + 1, ( *it_cam_points ).x )[ 0 ];
     double G = mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y - 1, ( *it_cam_points ).x )[ 1 ] + mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x )[ 1 ] + mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y + 1, ( *it_cam_points ).x )[ 1 ];
     double R = mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y - 1, ( *it_cam_points ).x )[ 2 ] + mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x )[ 2 ] + mat_BGR.at<cv::Vec3b>( ( *it_cam_points ).y + 1, ( *it_cam_points ).x )[ 2 ];
