@@ -1196,7 +1196,7 @@ bool MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
       }
     }
 
-  row = delay / .012 *this->Projector.GetHeight() ;
+  row = (1 - delay / .019) *this->Projector.GetHeight() ;
   std::cout << "row is : " << row << std::endl;
   if( row <= 0 || row > this->Projector.GetHeight() )
     {
@@ -1210,7 +1210,7 @@ bool MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
   distortedProjectorPoints.at<cv::Vec2d>( 0, 0 ) = cv::Vec2d( this->Projector.GetWidth(), row );
   distortedProjectorPoints.at<cv::Vec2d>(0, 1) = cv::Vec2d(0, row);
 
-  cv::undistortPoints(distortedProjectorPoints, undistortedProjectorPoints, this->Calib.Proj_K , this->Calib.Proj_kc );
+  cv::undistortPoints(distortedProjectorPoints, undistortedProjectorPoints, this->Calib.Proj_K , cv::Mat() );
   assert( undistortedProjectorPoints.type() == CV_64FC2 && undistortedProjectorPoints.rows == 1 && undistortedProjectorPoints.cols == 2 );
   const cv::Vec2d & outvec2 = undistortedProjectorPoints.at<cv::Vec2d>( 0, 0 );
   projectorVector1 = cv::Point3d( outvec2[ 0 ], outvec2[ 1 ], 1.0 );
@@ -1236,12 +1236,12 @@ bool MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
     cv::undistortPoints( inp1, outp1, this->Calib.Cam_K, this->Calib.Cam_kc );
     assert( outp1.type() == CV_64FC2 && outp1.rows == 1 && outp1.cols == 1 );
     const cv::Vec2d & outvec1 = outp1.at<cv::Vec2d>( 0, 0 );
-    cameraVector = cv::Point3d( outvec1[ 0 ], outvec1[ 1 ], 1 );
+    cameraVector = cv::Point3d( outvec1[ 0 ], -outvec1[ 1 ], 1 );
     //to world coordinates
 
     
 
-    p = approximate_ray_plane_intersection(this->Calib.T, cameraVector, projectorNormal);
+	p = approximate_ray_plane_intersection(this->Calib.T, cameraVector, projectorNormal);
 
 	
 
