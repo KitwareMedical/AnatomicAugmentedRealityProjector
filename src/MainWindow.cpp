@@ -691,7 +691,7 @@ void MainWindow::on_cam_record_clicked()
 
 void MainWindow::DisplayCamera()
 {
-  //CamInput.IncrementTriggerDelay();
+  CamInput.IncrementTriggerDelay();
 
   QGraphicsScene *scene = new QGraphicsScene(this);
   ui->cam_image->setScene(scene);
@@ -790,15 +790,11 @@ void MainWindow::on_analyze_clicked()
   while( delay < .012 )
     {
 		this->CamInput.SetCameraTriggerDelay(delay);
-    this->DisplayCamera();
-    QCoreApplication::processEvents();
+    //this->DisplayCamera();
+    //QCoreApplication::processEvents();
     crt_mat = this->CamInput.GetImageFromBuffer();
     valid = ComputePointCloud( &pointcloud, &pointcloud_colors, mat_color_ref, crt_mat, imageTest, color_image, delay );
-    if( valid == true )
-      {
-      this->TimerShots++;
-      }
-	delay += .0001;
+	delay += .0002;
     }
 
   //imagename = QString( "C:\\Camera_Projector_Calibration\\Tests_publication\\color_image.png" );
@@ -806,12 +802,7 @@ void MainWindow::on_analyze_clicked()
 
   std::cout << "End : 3D reconstruction of every line" << std::endl;
 
-  // Limit of the white cardboard
-  for( int row = 0; row < imageTest.rows; row++ )
-    {
-    imageTest.at<cv::Vec3b>( row, imageTest.cols - imageTest.cols / 6 ) = { 0, 0, 255 };
-    }
-  // Blue line = invalid - White line = valid
+ 
   cv::imshow( "ImageTest", imageTest );
   cv::waitKey( 0 );
 
@@ -1183,7 +1174,7 @@ bool MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
       {
       sum = sum - mat_gray.at< unsigned char >( i - 2, j ) + mat_gray.at< unsigned char >( i + 1, j );
       average = sum / 3;
-	  if (average > sat_max && average > 78)
+	  if (average > sat_max && average > 40)
 	  {
 		  point_max = cv::Point2i(j, i);
 		  sat_max = average;
@@ -1197,7 +1188,6 @@ bool MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
     }
 
   row = (1 - delay / .019) *this->Projector.GetHeight() ;
-  std::cout << "row is : " << row << std::endl;
   if( row <= 0 || row > this->Projector.GetHeight() )
     {
     std::cout << "The computed row is not valid. The line is skipped. Computed row = " << row << std::endl;
@@ -1219,13 +1209,10 @@ bool MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
   projectorVector2 = cv::Point3d(outvec3[0], outvec3[1], 1.0);
 
 
-
-  //to world coordinates
+  //find normal of laser plane via cross product of two vectors in plane
   projectorNormal = cv::Point3d( cv::Mat( this->Calib.R*( cv::Mat( projectorVector1 ).cross(cv::Mat(projectorVector2))) ) );
-  // world rays = normal vector
-  v2 = projectorVector1;
 
-  std::cout << "p1:" << projectorVector1 << "\np2:" << projectorVector2 << "\n pn:" << projectorNormal << std::endl;
+  //std::cout << "p1:" << projectorVector1 << "\np2:" << projectorVector2 << "\n pn:" << projectorNormal << std::endl;
 
 
   it_cam_points = cam_points.begin();
