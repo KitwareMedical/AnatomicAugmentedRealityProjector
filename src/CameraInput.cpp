@@ -125,7 +125,7 @@ void CameraInput::SetCameraTriggerDelay(double delay)
 	Error error;
 
 	// Check if the camera supports the FRAME_RATE property
-	std::cout << "Detecting trigger delay from camera... " << std::endl;
+	//std::cout << "Detecting trigger delay from camera... " << std::endl;
 	PropertyInfo propInfo;
 	propInfo.type = TRIGGER_DELAY;
 	error = this->Camera.GetPropertyInfo(&propInfo);

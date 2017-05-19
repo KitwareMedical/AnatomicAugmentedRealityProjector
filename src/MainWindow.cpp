@@ -86,7 +86,7 @@ MainWindow::MainWindow( QWidget *parent ) :
   this->connect( timer, SIGNAL( timeout() ), SLOT( DisplayCamera() ));
 
   CalibrationData calib;
-  QString calibrationFile = "C:\\D\\3Dscan\\AnatomicAugmentedRealityProjector\\CalibrationFile.yml";
+  QString calibrationFile = "C:\\MyProjects\\AnatomicAugmentedRealityProjector-Hastings\\CalibrationFile.yml";
 
   bool error = this->Calib.LoadCalibration( calibrationFile );
   if( error == false )
@@ -678,7 +678,7 @@ void MainWindow::on_cam_display_clicked()
   bool success = CamInput.Run();
   if( success == false )
     {
-    std::cout << "Impossible to start the camera. Analyze stopped." << std::endl;
+    //std::cout << "Impossible to start the camera. Analyze stopped." << std::endl;
     return;
     }
   this->timer->start();
@@ -691,7 +691,7 @@ void MainWindow::on_cam_record_clicked()
 
 void MainWindow::DisplayCamera()
 {
-  CamInput.IncrementTriggerDelay();
+  //CamInput.IncrementTriggerDelay();
 
   QGraphicsScene *scene = new QGraphicsScene(this);
   ui->cam_image->setScene(scene);
@@ -766,7 +766,7 @@ void MainWindow::on_analyze_clicked()
   if( success == false )
     {
     std::cout << "Impossible to start the camera. Analyze stopped." << std::endl;
-    return;
+    //return;
     }
   this->DisplayCamera();
   QCoreApplication::processEvents();
@@ -783,18 +783,20 @@ void MainWindow::on_analyze_clicked()
   this->TimerShots = 0;
   bool valid;
   QString imagename;
-  cv::Mat crt_mat;
+  cv::Mat crt_mat, prev_mat;
   cv::Mat color_image = cv::Mat::zeros( mat_color_ref.rows, mat_color_ref.cols, CV_8UC3 );
 
   double delay = 0;
-  while( delay < .012 )
+  double delta = .00002;
+  while( delay < .013 )
     {
-		this->CamInput.SetCameraTriggerDelay(delay);
     //this->DisplayCamera();
     //QCoreApplication::processEvents();
+    prev_mat = crt_mat;
     crt_mat = this->CamInput.GetImageFromBuffer();
-    valid = ComputePointCloud( &pointcloud, &pointcloud_colors, mat_color_ref, crt_mat, imageTest, color_image, delay );
-	delay += .0002;
+    delay += delta;
+    this->CamInput.SetCameraTriggerDelay(delay);
+    valid = ComputePointCloud( &pointcloud, &pointcloud_colors, mat_color_ref, crt_mat, imageTest, color_image, delay - delta );
     }
 
   //imagename = QString( "C:\\Camera_Projector_Calibration\\Tests_publication\\color_image.png" );
@@ -1129,8 +1131,8 @@ bool MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
 {
   cv::Mat mat_BGR;
   cv::Mat mat_gray;
-  std::vector<cv::Point2i> cam_points;
-  std::vector<cv::Point2i>::iterator it_cam_points;
+  std::vector<cv::Point2d> cam_points;
+  std::vector<cv::Point2d>::iterator it_cam_points;
   int row = 0;
   cv::Point3d p;
   cv::Mat inp1( 1, 1, CV_64FC2 );
@@ -1174,7 +1176,7 @@ bool MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
       {
       sum = sum - mat_gray.at< unsigned char >( i - 2, j ) + mat_gray.at< unsigned char >( i + 1, j );
       average = sum / 3;
-	  if (average > sat_max && average > 40)
+	  if (average > sat_max && average > 60)
 	  {
 		  point_max = cv::Point2i(j, i);
 		  sat_max = average;
@@ -1182,7 +1184,16 @@ bool MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
       }
     if( point_max != cv::Point2i( 0, 0 ) )
       {
-      cam_points.push_back( point_max );
+      double average = 0;
+	  double COM = 0;
+      for (int y = std::max(0, point_max.y - 3); y <= std::min(point_max.y + 3, mat_gray.rows - 1); y++)
+	    {
+			average += mat_gray.at<unsigned char>(y, point_max.x);
+		    COM += y * mat_gray.at<unsigned char>(y, point_max.x);
+        }
+      
+	  double y = COM / average;
+      cam_points.push_back( cv::Point2d(point_max.x, y));
       imageTest.at<cv::Vec3b>( point_max ) = { 255, 0, 0 };
       }
     }
@@ -1234,7 +1245,7 @@ bool MainWindow::ComputePointCloud(cv::Mat *pointcloud, cv::Mat *pointcloud_colo
 
     cv::Vec3f & cloud_point = (*pointcloud).at<cv::Vec3f>( ( *it_cam_points ).y, ( *it_cam_points ).x );
     cloud_point[ 0 ] = p.x;
-    cloud_point[ 1 ] = p.y;
+    cloud_point[ 1 ] = -p.y;
     cloud_point[ 2 ] = p.z;
 
 
@@ -1488,7 +1499,7 @@ void MainWindow::density_probability( cv::Mat pointcloud, cv::Mat pointcloud_BGR
         res_BGR = std::max( { res_BGR_G, res_BGR_B, res_BGR_R } );
 
         //if( res_BGR > 5e-94 )
-        if( res_BGR > 1e-9 )
+        if( res_BGR > 1e-11 )
           {
           if( res_BGR == res_BGR_G )
             {
