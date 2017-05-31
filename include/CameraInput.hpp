@@ -22,6 +22,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 =========================================================================*/
+#ifndef CAMERAINPUT_HPP
+#define CAMERAINPUT_HPP
 
 #include "FlyCapture2.h"
 
@@ -75,3 +77,6 @@ private :
   std::vector<cv::Mat> FrameBuffer;
   int BufferSize;
 };
+
+
+#endif

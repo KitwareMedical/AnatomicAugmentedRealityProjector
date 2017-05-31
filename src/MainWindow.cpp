@@ -23,6 +23,8 @@ limitations under the License.
 
 =========================================================================*/
 
+#define DEBUG_POINTCLOUDS
+
 #include "io_util.hpp"
 #include "MainWindow.hpp"
 #include "ui_MainWindow.h"
@@ -86,7 +88,7 @@ MainWindow::MainWindow( QWidget *parent ) :
   this->connect( timer, SIGNAL( timeout() ), SLOT( DisplayCamera() ));
 
   CalibrationData calib;
-  QString calibrationFile = "C:\\MyProjects\\AnatomicAugmentedRealityProjector-Hastings\\CalibrationFile.yml";
+  QString calibrationFile = "C:\\D\\3Dscan\\AnatomicAugmentedRealityProjector\\CalibrationFile.yml";
 
   bool error = this->Calib.LoadCalibration( calibrationFile );
   if( error == false )
@@ -97,7 +99,23 @@ MainWindow::MainWindow( QWidget *parent ) :
     {
     this->Calib.Display();
     }
+  std::cout << NNClassifyColors((cv::Mat_<double>(1, 3) << 140,230, 130)) << std::endl;
 }
+
+cv::Mat MainWindow::NNClassifyColors(cv::Mat colors){
+    //
+	static cv::Mat layer1M = (cv::Mat_<double>(3, 20) << -0.46561, -0.464753, -0.441701, 0.265619, -0.0794222, -0.336208, -0.407372, -0.476262, -0.358929, 0.11973, -0.144362, 0.011893, 0.00369619, -0.58382, -0.460448, -0.4883, 0.257962, 0.111014, 0.221085, -0.115245, -0.468333, -0.331791, 0.327327, -0.721701, 0.0308189, -0.0109495, -0.591048, -0.465264, -0.124108, -0.17753, -0.240377, -0.474372, -0.186954, 0.194256, 0.498416, -0.153055, -0.152493, -0.118814, -0.273497, -0.314121, -0.422223, -0.47281, 0.11764, 0.184481, 0.164925, 0.391668, 0.548537, 0.136319, 0.275656, 0.229943, -0.0160464, -0.450993, -0.608574, -0.048987, -0.0741594, -0.494928, 0.135861, 0.0284544, -0.190202, 0.365849);
+	static cv::Mat layer1b = (cv::Mat_<double>(1, 20) << 0.0, 0.0, 1.02417, -0.101617, 1.10532, -0.354024, -0.865269, -0.1142, 0.451612, -1.19046, 0.0, -0.173002, -0.102641, -0.592558, -0.929955, 0.0, 0.130743, 0.997855, -0.536268, 1.17299);
+
+	static cv::Mat layer2M = (cv::Mat_<double>(20, 7) << 0.0486266, 0.387843, 0.325573, 0.464626, -0.0581379, -0.33381, 0.353558, 0.0419606, -0.228845, -0.209768, 0.436064, -0.312049, 0.217268, -0.0905344, -0.431897, -0.0411522, -0.282755, -0.0519514, -0.0037479, 0.123086, 0.0705703, -0.209886, 0.0900581, 0.0664114, 0.354451, -0.287335, 0.134728, 0.00584876, 0.165506, -0.404287, 0.236688, 0.439842, -0.429936, -0.143274, -0.00450467, -0.484109, 0.127069, 0.0745968, 0.0902402, -0.353209, 0.400499, 0.123299, 0.372309, -0.0251773, 0.371902, 0.132656, -0.461655, -0.0749941, 0.105539, 0.231794, 0.372855, 0.346352, 0.616517, 0.450901, 0.187632, -0.567534, -0.343429, -0.0100041, 0.217494, -0.295606, 0.365753, -0.692834, 0.00629612, -0.307328, 0.406752, -0.243178, -0.283883, 0.10712, -0.28927, -0.105234, 0.119902, 0.38432, 0.0743947, 0.134401, -0.0409988, 0.0459979, 0.367451, -0.313109, 0.626782, 0.0327785, 0.224117, 0.403504, 0.814649, 0.0936099, 0.211686, -0.267912, 0.467233, 0.184689, 0.222669, 0.438642, -0.136827, 0.493749, 0.103821, -0.502788, 0.183925, -0.248316, -0.0516033, 0.433942, 0.183481, 0.205047, -0.193198, 0.392753, -0.0955889, -0.424168, -0.192003, -0.0868697, 0.150881, -0.324374, -0.22052, 0.206335, -0.233846, 0.00296679, 0.039072, -0.119868, -0.619125, 0.0602632, 0.000689579, 0.424598, -0.0495005, 0.159581, -0.441435, 0.136871, 0.166651, -0.271205, 0.236366, 0.274756, -0.028359, 0.100489, 0.474152, -0.444237, 0.0476164, 0.496671, -0.145268, 0.330884, 0.0574391, -0.350685, -0.302294, -0.151138, -0.416798, 0.0846137);
+	static cv::Mat layer2b = (cv::Mat_<double>(1, 7) << 1.04831, -1.60268, -0.6065, 0.171145, -0.447067, -0.251562, 1.17075);
+	
+	static cv::Mat layer3M = (cv::Mat_<double>(7, 4) << -1.19894, -0.941196, -2.3716, 0.343039, -0.926799, -0.675361, -0.884165, 0.285122, -0.42241, -1.2389, -0.397014, 0.214381, -0.764641, 0.145982, -0.473203, 0.0182096, -0.324915, 0.161614, 0.287208, 0.357671, -0.211177, -0.825902, -0.638148, -0.360811, -1.20959, -0.731103, 0.35537, -0.118167);
+	static cv::Mat layer3b = (cv::Mat_<double>(1, 4) << -1.78275, 0.550166, 0.344412, -0.0907723);
+
+	return cv::max(0, (cv::max(0, (colors* layer1M + layer1b)) * layer2M + layer2b))*layer3M + layer3b;
+}
+
 
 MainWindow::~MainWindow()
 {
@@ -349,7 +367,7 @@ void MainWindow::on_detect_colors_clicked()
     points_B.clear();
     points_G.clear();
     points_R.clear();
-    density_probability( pointcloud, pointcloud_colors, &points_B, &points_G, &points_R );
+    density_probability( pointcloud, pointcloud_colors, &points_B, &points_G, &points_R, 2e-13 );
 
     std::cout << "max_x = " << max_x << std::endl;
     std::cout << "max_y = " << max_y << std::endl;
@@ -770,57 +788,24 @@ void MainWindow::on_analyze_clicked()
     }
   this->DisplayCamera();
   QCoreApplication::processEvents();
-  cv::Mat mat_color_ref = this->CurrentMat;
+  PointCloud pointcloud = this->PCInput.ComputePointCloud();
 
-  cv::Mat pointcloud = cv::Mat( mat_color_ref.rows, mat_color_ref.cols, CV_32FC3 );
-  cv::Mat pointcloud_colors = cv::Mat( mat_color_ref.rows, mat_color_ref.cols, CV_8UC3 );
-
-
-  /***********************3D Reconstruction of other lines****************************/
-  std::cout << "Start : 3D reconstruction of every line" << std::endl;
-  // imageTest is used to control which points have been used on the projector for the reconstruction
-  cv::Mat imageTest = cv::Mat::zeros( mat_color_ref.rows, mat_color_ref.cols, CV_8UC3 );
-  this->TimerShots = 0;
-  bool valid;
-  QString imagename;
-  cv::Mat crt_mat, prev_mat;
-  cv::Mat color_image = cv::Mat::zeros( mat_color_ref.rows, mat_color_ref.cols, CV_8UC3 );
-
-  double delay = 0;
-  double delta = .00002;
-  while( delay < .013 )
-    {
-    //this->DisplayCamera();
-    //QCoreApplication::processEvents();
-    prev_mat = crt_mat;
-    crt_mat = this->CamInput.GetImageFromBuffer();
-    delay += delta;
-    this->CamInput.SetCameraTriggerDelay(delay);
-    valid = ComputePointCloud( &pointcloud, &pointcloud_colors, mat_color_ref, crt_mat, imageTest, color_image, delay - delta );
-    }
-
-  //imagename = QString( "C:\\Camera_Projector_Calibration\\Tests_publication\\color_image.png" );
-  //cv::imwrite( qPrintable( imagename ), color_image );
-
-  std::cout << "End : 3D reconstruction of every line" << std::endl;
-
- 
-  cv::imshow( "ImageTest", imageTest );
-  cv::waitKey( 0 );
-
-  if( !pointcloud.data )
+  if( !pointcloud.points.data )
     {
     qCritical() << "ERROR, reconstruction failed\n";
     }
-
-  save_pointcloud( pointcloud, pointcloud_colors, "pointcloud_BGR_original" );
-
+  
+#ifdef DEBUG_POINTCLOUDS
+  save_pointcloud( pointcloud.points, pointcloud.colors, "pointcloud_BGR_original" );
+#endif
   /***************************Finding the blue, red and green planes*****************************/
   std::vector<cv::Vec3f> points_B, points_G, points_R;
   points_B.clear();
   points_G.clear();
   points_R.clear();
-  density_probability( pointcloud, pointcloud_colors, &points_B, &points_G, &points_R );
+  NNDensityProbabilityReplacement( pointcloud.points, pointcloud.colors, &points_B, &points_G, &points_R , 6);
+  //density_probability( pointcloud.points, pointcloud.colors, &points_B, &points_G, &points_R , 2e-33);
+
   //std::cout << "Number of blue points found : " << points_B.size() << std::endl;
   //std::cout << "Number of red points found : " << points_R.size() << std::endl;
   //std::cout << "Number of green points found : " << points_G.size() << std::endl;
@@ -834,7 +819,7 @@ void MainWindow::on_analyze_clicked()
   int nb = 0;
   float distance_B = 0, distance_R = 0, distance_G = 0;
   float distB = 0, distG = 0, distR = 0;
-  float dist_circles = 0.008f;
+  float dist_circles = 1.3f;
   float variance = 3;
   std::cout << "max_x = " << max_x << std::endl;
   std::cout << "max_y = " << max_y << std::endl;
@@ -904,9 +889,11 @@ void MainWindow::on_analyze_clicked()
   center_R = cv::Vec3f{ max_x_R, max_y_R, max_z_R };
   center_G = cv::Vec3f{ max_x_G, max_y_G, max_z_G };
 
-  save_pointcloud_centers( pointcloud, pointcloud_colors, center_B, center_G, center_R, 0.01f, "pointcloud_BGR_centers_histo" );
-
-  for( float dist = 1.5f; dist > 0.05f; dist -= 0.02 )
+  std::cout << "histogram centers" << center_B << center_R << center_G << std::endl;
+#ifdef DEBUG_POINTCLOUDS
+  save_pointcloud_centers( pointcloud.points, pointcloud.colors, center_B, center_G, center_R, 1, "pointcloud_BGR_centers_histo" );
+#endif
+  for( float dist = 15.f; dist > 5.0f; dist -= 1 )
     {
     nb = 0; center_G = cv::Vec3b( 0, 0, 0 );
     for( auto iter = points_G.cbegin(); iter != points_G.cend(); ++iter )
@@ -950,9 +937,9 @@ void MainWindow::on_analyze_clicked()
   std::cout << "Center_B : " << center_B << std::endl;
   std::cout << "Center_R : " << center_R << std::endl;
   std::cout << "Center_G : " << center_G << std::endl;
-
-  save_pointcloud_centers( pointcloud, pointcloud_colors, center_B, center_G, center_R, dist_circles, "pointcloud_BGR_centers" );
-
+#ifdef DEBUG_POINTCLOUDS
+  save_pointcloud_centers( pointcloud.points, pointcloud.colors, center_B, center_G, center_R, dist_circles, "pointcloud_BGR_centers" );
+#endif
   /**************    M1    ***************/
   /*// Redefine the colored vectors
   std::vector<cv::Vec3f> good_B;
@@ -1038,17 +1025,17 @@ void MainWindow::on_analyze_clicked()
   /**************    M2 = circles    ***************/
   std::vector<cv::Vec3f> blue, green, red;
   float dist_B, dist_G, dist_R;
-  for( int row = 0; row < pointcloud.rows; row++ )
+  for( int row = 0; row < pointcloud.points.rows; row++ )
     {
-    for( int col = 0; col < pointcloud.cols; col++ )
+    for( int col = 0; col < pointcloud.points.cols; col++ )
       {
-      cv::Vec3f crt = pointcloud.at<cv::Vec3f>( row, col );
+      cv::Vec3f crt = pointcloud.points.at<cv::Vec3f>( row, col );
       if( crt[ 2 ] > 0 )
         {
         dist_B = std::sqrt( pow( center_B[ 0 ] - crt[ 0 ], 2 ) + pow( center_B[ 1 ] - crt[ 1 ], 2 ) + pow( center_B[ 2 ] - crt[ 2 ], 2 ) );
         dist_R = std::sqrt( pow( center_R[ 0 ] - crt[ 0 ], 2 ) + pow( center_R[ 1 ] - crt[ 1 ], 2 ) + pow( center_R[ 2 ] - crt[ 2 ], 2 ) );
         dist_G = std::sqrt( pow( center_G[ 0 ] - crt[ 0 ], 2 ) + pow( center_G[ 1 ] - crt[ 1 ], 2 ) + pow( center_G[ 2 ] - crt[ 2 ], 2 ) );
-        pointcloud_colors.at<cv::Vec3b>( row, col ) = cv::Vec3b( 0, 0, 0 );
+        pointcloud.colors.at<cv::Vec3b>( row, col ) = cv::Vec3b( 0, 0, 0 );
         if( dist_B < dist_circles )
           {
           blue.push_back( crt );
@@ -1065,16 +1052,9 @@ void MainWindow::on_analyze_clicked()
       }
     }
 
-  std::vector<cv::Vec3f> res_blue = ransac( blue, 3, 200, 0.002f, 10 );
-  if( res_blue.size() != 2 )
-    {
-    std::cout << "Error in the RANSAC algorithm" << std::endl;
-    return;
-    }
-  cv::Vec3f normal_blue = res_blue[ 0 ];
-  cv::Vec3f A_blue = res_blue[ 1 ];
+  
 
-  std::vector<cv::Vec3f> res_red = ransac( red, 3, 100, 0.005f, std::min( 10, int( red.size() ) - 2 ), normal_blue );
+  std::vector<cv::Vec3f> res_red = ransac( red, 3, 100, 0.2f, std::min( 10, int( red.size() ) - 2 ));
   if( res_red.size() != 2 )
     {
     std::cout << "Error in the RANSAC algorithm" << std::endl;
@@ -1083,7 +1063,7 @@ void MainWindow::on_analyze_clicked()
   cv::Vec3f normal_red = res_red[ 0 ];
   cv::Vec3f A_red = res_red[ 1 ];
 
-  std::vector<cv::Vec3f> res_green = ransac( green, 3, 100, 0.005f, std::min( 10, int( green.size() ) - 2 ), normal_blue, normal_red );
+  std::vector<cv::Vec3f> res_green = ransac( green, 3, 100, 0.2f, std::min( 10, int( green.size() ) - 2 ));
   if( res_green.size() != 2 )
     {
     std::cout << "Error in the RANSAC algorithm" << std::endl;
@@ -1092,14 +1072,24 @@ void MainWindow::on_analyze_clicked()
   cv::Vec3f normal_green = res_green[ 0 ];
   cv::Vec3f A_green = res_green[ 1 ];
 
+  std::vector<cv::Vec3f> res_blue = ransac(blue, 3, 200, 0.2f, 10);//, normal_red, normal_green);
+  if (res_blue.size() != 2)
+  {
+	  std::cout << "Error in the RANSAC algorithm" << std::endl;
+	  return;
+  }
+  cv::Vec3f normal_blue = res_blue[0];
+  cv::Vec3f A_blue = res_blue[1];
+
+
   cv::Vec3f intersection_circle;
   intersection_circle = three_planes_intersection( normal_blue, normal_green, normal_red, A_blue, A_green, A_red );
   std::cout << "Intersection_circle : " << intersection_circle << std::endl;
-
-  save_pointcloud_plane_intersection( pointcloud, pointcloud_colors, normal_blue, normal_green, normal_red, A_blue, A_green, A_red, intersection_circle, 0.001f, "pointcloud_BGR_plane_circles" );
-
+#ifdef DEBUG_POINTCLOUDS
+  save_pointcloud_plane_intersection( pointcloud.points, pointcloud.colors, normal_blue, normal_green, normal_red, A_blue, A_green, A_red, intersection_circle, 0.05f, "pointcloud_BGR_plane_circles" );
+#endif
   std::fstream outputFile;
-  outputFile.open( "C:\\Camera_Projector_Calibration\\Tests_publication\\800-between-395-780\\intersection_point_circle.txt", std::ios::out );
+  outputFile.open( "C:\\D\\pointclouds\\outputs", std::ios::out );
   outputFile << "Intersection_circle : " << intersection_circle << std::endl;
   outputFile.close();
 
@@ -1363,7 +1353,127 @@ std::vector<cv::Vec3f> MainWindow::ransac( std::vector<cv::Vec3f> points, int mi
   return res;
   }
 
-void MainWindow::density_probability( cv::Mat pointcloud, cv::Mat pointcloud_BGR, std::vector<cv::Vec3f> *points_B, std::vector<cv::Vec3f> *points_G, std::vector<cv::Vec3f> *points_R )
+void MainWindow::NNDensityProbabilityReplacement(cv::Mat pointcloud, cv::Mat pointcloud_BGR, std::vector<cv::Vec3f> *points_B, std::vector<cv::Vec3f> *points_G, std::vector<cv::Vec3f> *points_R, double threshold_unused)
+{
+	cv::Mat pt_BGR = pointcloud_BGR.clone();
+	
+
+	double sum_B = 0, sum_G = 0, sum_R = 0;
+	int nb_B = 0, nb_G = 0, nb_R = 0;
+
+	float max_x_R = -9999, min_x_R = 9999;
+	float max_y_R = -9999, min_y_R = 9999;
+
+	// we don't take into account the 2 pixels on the borders
+	//for( int row = this->CamInput.GetTopLine(); row < this->CamInput.GetBottomLine(); row++ )
+	for (int row = 2; row < pointcloud_BGR.rows - 2; row++)
+	{
+		for (int col = 2; col < pointcloud_BGR.cols - 2; col++)
+		{
+			cv::Vec3f crt = pointcloud.at<cv::Vec3f>(row, col);
+			cv::Vec3b crt_BGR = pointcloud_BGR.at<cv::Vec3b>(row, col);
+			if (crt[2] > -9999) // valid points in the point cloud
+			{
+				if (crt[0] > this->max_x)
+				{
+					this->max_x = crt[0];
+				}
+				if (crt[0] < this->min_x)
+				{
+					this->min_x = crt[0];
+				}
+				if (crt[1] > this->max_y)
+				{
+					this->max_y = crt[1];
+				}
+				if (crt[1] < this->min_y)
+				{
+					this->min_y = crt[1];
+				}
+				if (crt[2] > this->max_z)
+				{
+					this->max_z = crt[2];
+				}
+				if (crt[2] < this->min_z)
+				{
+					this->min_z = crt[2];
+				}
+				cv::Mat res = NNClassifyColors((cv::Mat_<double>(1, 3) << crt_BGR[2], crt_BGR[1], crt_BGR[0]));
+				res.at<double>(3) += .3;
+				int mostLikely = 0;
+				double maxval = -999999;
+				for (int i = 0; i < 4; i++){
+					if (res.at<double>(i) > maxval){
+						mostLikely = i;
+						maxval = res.at<double>(i);
+					}
+				}
+				//0 = red, 1 = green, 2 = blue, 3 = background
+				    
+				if (mostLikely != 3)
+				{
+					if (mostLikely == 1)
+					{
+						pt_BGR.at<cv::Vec3b>(row, col) = cv::Vec3b(0, 255, 0);
+						(*points_G).push_back(crt);
+						
+						nb_G++;
+					}
+					else if (mostLikely == 2)
+					{
+						pt_BGR.at<cv::Vec3b>(row, col) = cv::Vec3b(255, 0, 0);
+						(*points_B).push_back(crt);
+
+						nb_B++;
+						if (crt[0] > max_x_R)
+						{
+							max_x_R = crt[0];
+						}
+						if (crt[0] < min_x_R)
+						{
+							min_x_R = crt[0];
+						}
+						if (crt[1] > max_y_R)
+						{
+							max_y_R = crt[1];
+						}
+						if (crt[1] < min_y_R)
+						{
+							min_y_R = crt[1];
+						}
+					}
+					else if (mostLikely == 0)
+					{
+						pt_BGR.at<cv::Vec3b>(row, col) = cv::Vec3b(0, 0, 255);
+						(*points_R).push_back(crt);
+						nb_R++;
+					}
+				}
+				else
+				{
+					pt_BGR.at<cv::Vec3b>(row, col) = cv::Vec3b(255, 255, 255);
+				}
+			}
+		}
+	}
+
+	save_pointcloud(pointcloud, pt_BGR, "pointcloud_BGR_BGR");
+
+	sum_B = sum_B / nb_B;
+	sum_G = sum_G / nb_G;
+	sum_R = sum_R / nb_R;
+	std::cout << "blue sum = " << sum_B << std::endl;
+	std::cout << "green sum = " << sum_G << std::endl;
+	std::cout << "red sum = " << sum_R << std::endl;
+
+	std::cout << "min_x_R = " << min_x_R << std::endl;
+	std::cout << "max_x_R = " << max_x_R << std::endl;
+	std::cout << "min_y_R = " << min_y_R << std::endl;
+	std::cout << "max_y_R = " << max_y_R << std::endl;
+
+}
+
+void MainWindow::density_probability( cv::Mat pointcloud, cv::Mat pointcloud_BGR, std::vector<cv::Vec3f> *points_B, std::vector<cv::Vec3f> *points_G, std::vector<cv::Vec3f> *points_R, double threshold )
   {
   cv::Mat pt_BGR = pointcloud_BGR.clone();
   typedef itk::Vector< unsigned char, 3 > MeasurementVectorType;
@@ -1499,7 +1609,7 @@ void MainWindow::density_probability( cv::Mat pointcloud, cv::Mat pointcloud_BGR
         res_BGR = std::max( { res_BGR_G, res_BGR_B, res_BGR_R } );
 
         //if( res_BGR > 5e-94 )
-        if( res_BGR > 1e-11 )
+        if( res_BGR > threshold)
           {
           if( res_BGR == res_BGR_G )
             {
@@ -1699,7 +1809,7 @@ void MainWindow::save_pointcloud_centers(cv::Mat pointcloud, cv::Mat pointcloud_
     for( int col = 0; col < pointcloud.cols; col++ )
       {
       cv::Vec3f crt = pointcloud.at<cv::Vec3f>( row, col );
-      if( crt[ 2 ] > 0 )
+      if( crt[ 2 ] > -9999 )
         {
         dist_B = std::sqrt( pow( center_B[ 0 ] - crt[ 0 ], 2 ) + pow( center_B[ 1 ] - crt[ 1 ], 2 ) + pow( center_B[ 2 ] - crt[ 2 ], 2 ) );
         dist_R = std::sqrt( pow( center_R[ 0 ] - crt[ 0 ], 2 ) + pow( center_R[ 1 ] - crt[ 1 ], 2 ) + pow( center_R[ 2 ] - crt[ 2 ], 2 ) );
@@ -1728,8 +1838,10 @@ void MainWindow::save_pointcloud_centers(cv::Mat pointcloud, cv::Mat pointcloud_
 
 void MainWindow::save_pointcloud(cv::Mat pointcloud, cv::Mat pointcloud_colors, QString name)
 {
-  QString namefile = "C:\\Camera_Projector_Calibration\\Tests_publication\\" + name;
-  QString filename = QFileDialog::getSaveFileName( this, "Save pointcloud", namefile + ".ply", "Pointclouds (*.ply)" );
+  QString namefile = "C:\\D\\pointclouds\\" + name;
+  //QString filename = QFileDialog::getSaveFileName( this, "Save pointcloud", namefile + ".ply", "Pointclouds (*.ply)" );
+  QString filename = namefile + ".ply";
+  std::cout << filename.toStdString() << std::endl;
   if( !filename.isEmpty() )
     {
     std::cout << "Saving the pointcloud" << std::endl;

@@ -52,6 +52,7 @@ set( source_files
   src/io_util.cpp
   src/Main.cpp
   src/MainWindow.cpp
+  src/PointCloudInput.cpp
   src/ProjectorWidget.cpp
   )
 
@@ -60,6 +61,7 @@ set( include_files
   include/CameraInput.hpp
   include/io_util.hpp
   include/MainWindow.hpp
+  include/PointCloudInput.hpp
   include/ProjectorWidget.hpp
   )
 
