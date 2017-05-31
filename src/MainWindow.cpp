@@ -29,6 +29,8 @@ limitations under the License.
 #include "MainWindow.hpp"
 #include "ui_MainWindow.h"
 
+#include "FileConfiguration.h"
+
 #include "FlyCapture2.h"
 
 #include "itkImage.h"
@@ -91,7 +93,7 @@ MainWindow::MainWindow( QWidget *parent ) :
   this->connect( timer, SIGNAL( timeout() ), SLOT( DisplayCamera() ));
 
   CalibrationData calib;
-  QString calibrationFile = "C:\\D\\3Dscan\\AnatomicAugmentedRealityProjector\\CalibrationFile.yml";
+  QString calibrationFile = CAMERA_CALIB_FILE_LOCATION;
 
   bool error = this->Calib.LoadCalibration( calibrationFile );
   if( error == false )
@@ -1095,7 +1097,7 @@ void MainWindow::on_analyze_clicked()
   save_pointcloud_plane_intersection( pointcloud.points, pointcloud.colors, normal_blue, normal_green, normal_red, A_blue, A_green, A_red, intersection_circle, 0.05f, "pointcloud_BGR_plane_circles" );
 #endif
   std::fstream outputFile;
-  outputFile.open( "C:\\D\\pointclouds\\outputs\\positions.txt", std::ios_base::app );
+  outputFile.open( TRACKING_OUT_FILE, std::ios_base::app );
   outputFile << "Intersection_circle : " << intersection_circle << "Time: " << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) << std::endl;
   outputFile.close();
 
@@ -1845,7 +1847,7 @@ void MainWindow::save_pointcloud_centers(cv::Mat pointcloud, cv::Mat pointcloud_
 
 void MainWindow::save_pointcloud(cv::Mat pointcloud, cv::Mat pointcloud_colors, QString name)
 {
-  QString namefile = "C:\\D\\pointclouds\\" + name;
+  QString namefile = POINTCLOUD_FOLDER + name;
   //QString filename = QFileDialog::getSaveFileName( this, "Save pointcloud", namefile + ".ply", "Pointclouds (*.ply)" );
   QString filename = namefile + ".ply";
   std::cout << filename.toStdString() << std::endl;

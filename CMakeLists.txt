@@ -59,6 +59,7 @@ set( source_files
 set( include_files
   include/CalibrationData.hpp
   include/CameraInput.hpp
+  include/FileConfiguration.h
   include/io_util.hpp
   include/MainWindow.hpp
   include/PointCloudInput.hpp
