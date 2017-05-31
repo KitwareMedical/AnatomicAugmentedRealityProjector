@@ -1089,7 +1089,7 @@ void MainWindow::on_analyze_clicked()
   save_pointcloud_plane_intersection( pointcloud.points, pointcloud.colors, normal_blue, normal_green, normal_red, A_blue, A_green, A_red, intersection_circle, 0.05f, "pointcloud_BGR_plane_circles" );
 #endif
   std::fstream outputFile;
-  outputFile.open( "C:\\D\\pointclouds\\outputs", std::ios::out );
+  outputFile.open( "C:\\D\\pointclouds\\outputs\\positions.txt", std::ios_base::app );
   outputFile << "Intersection_circle : " << intersection_circle << std::endl;
   outputFile.close();
 
