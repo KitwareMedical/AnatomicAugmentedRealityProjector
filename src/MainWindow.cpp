@@ -51,6 +51,9 @@ limitations under the License.
 #include <iostream>
 #include <map>
 #include <time.h>
+#include <ctime>
+#include <chrono>
+
 
 MainWindow::MainWindow( QWidget *parent ) :
   QMainWindow( parent ),
@@ -804,6 +807,8 @@ void MainWindow::on_analyze_clicked()
   points_G.clear();
   points_R.clear();
   NNDensityProbabilityReplacement( pointcloud.points, pointcloud.colors, &points_B, &points_G, &points_R , 6);
+  /*
+  
   //density_probability( pointcloud.points, pointcloud.colors, &points_B, &points_G, &points_R , 2e-33);
 
   //std::cout << "Number of blue points found : " << points_B.size() << std::endl;
@@ -1023,6 +1028,7 @@ void MainWindow::on_analyze_clicked()
   */
 
   /**************    M2 = circles    ***************/
+/*
   std::vector<cv::Vec3f> blue, green, red;
   float dist_B, dist_G, dist_R;
   for( int row = 0; row < pointcloud.points.rows; row++ )
@@ -1052,9 +1058,9 @@ void MainWindow::on_analyze_clicked()
       }
     }
 
-  
+  */
 
-  std::vector<cv::Vec3f> res_red = ransac( red, 3, 100, 0.2f, std::min( 10, int( red.size() ) - 2 ));
+  std::vector<cv::Vec3f> res_red = ransac( points_R, 3, 100, 0.2f, std::min( 10, 10  - 2 ));
   if( res_red.size() != 2 )
     {
     std::cout << "Error in the RANSAC algorithm" << std::endl;
@@ -1063,7 +1069,7 @@ void MainWindow::on_analyze_clicked()
   cv::Vec3f normal_red = res_red[ 0 ];
   cv::Vec3f A_red = res_red[ 1 ];
 
-  std::vector<cv::Vec3f> res_green = ransac( green, 3, 100, 0.2f, std::min( 10, int( green.size() ) - 2 ));
+  std::vector<cv::Vec3f> res_green = ransac( points_G, 3, 100, 0.2f, std::min( 10, 10 - 2 ));
   if( res_green.size() != 2 )
     {
     std::cout << "Error in the RANSAC algorithm" << std::endl;
@@ -1072,7 +1078,7 @@ void MainWindow::on_analyze_clicked()
   cv::Vec3f normal_green = res_green[ 0 ];
   cv::Vec3f A_green = res_green[ 1 ];
 
-  std::vector<cv::Vec3f> res_blue = ransac(blue, 3, 200, 0.2f, 10);//, normal_red, normal_green);
+  std::vector<cv::Vec3f> res_blue = ransac(points_B, 3, 200, 0.2f, 10);//, normal_red, normal_green);
   if (res_blue.size() != 2)
   {
 	  std::cout << "Error in the RANSAC algorithm" << std::endl;
@@ -1090,7 +1096,7 @@ void MainWindow::on_analyze_clicked()
 #endif
   std::fstream outputFile;
   outputFile.open( "C:\\D\\pointclouds\\outputs\\positions.txt", std::ios_base::app );
-  outputFile << "Intersection_circle : " << intersection_circle << std::endl;
+  outputFile << "Intersection_circle : " << intersection_circle << "Time: " << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) << std::endl;
   outputFile.close();
 
   /***********************Stop the camera***********************/
@@ -1099,6 +1105,7 @@ void MainWindow::on_analyze_clicked()
     {
     error.PrintErrorTrace();
     }
+  //on_analyze_clicked();
 
   return;
   }
