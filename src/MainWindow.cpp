@@ -23,7 +23,7 @@ limitations under the License.
 
 =========================================================================*/
 
-#define DEBUG_POINTCLOUDS
+//#define DEBUG_POINTCLOUDS
 
 #include "io_util.hpp"
 #include "MainWindow.hpp"
@@ -1169,7 +1169,7 @@ void MainWindow::on_analyze_clicked()
 #endif
   std::fstream outputFile;
   outputFile.open( TRACKING_OUT_FILE, std::ios_base::app );
-  outputFile << "Intersection_circle : " << intersection_circle << "Time: " << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) << std::endl;
+  outputFile << "Intersection_circle : " << intersection_circle << "Normals (RGB)" << normal_red << normal_green << normal_blue << "Time: " << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) << std::endl;
   outputFile.close();
 
   /***********************Stop the camera***********************/
@@ -1178,7 +1178,7 @@ void MainWindow::on_analyze_clicked()
     {
     error.PrintErrorTrace();
     }
-  //on_analyze_clicked();
+  on_analyze_clicked();
 
   return;
   }

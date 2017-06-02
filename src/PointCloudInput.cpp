@@ -65,8 +65,8 @@ PointCloud PointCloudInput::ComputePointCloud(){
 	CamInput->SetCameraTriggerDelay(.014);
 	cv::Mat mat_color_ref = this->CamInput->GetImageFromBuffer();
 
-	double max_delay = .013;
-	int numrows = 100;
+	double max_delay = .0119;
+	int numrows = 70;
 	double delta = max_delay / numrows;
 
 	cv::Mat pointcloud = cv::Mat(numrows, mat_color_ref.cols, CV_32FC3);
@@ -190,7 +190,7 @@ bool PointCloudInput::ComputePointCloudRow(cv::Mat *pointcloud, cv::Mat *pointcl
 		}
 	}
 
-	double row = (1 - delay / .019) *this->Projector->GetHeight();
+	double row = (1.16 - delay / .019) *this->Projector->GetHeight();
 	if (row <= 0 || row > this->Projector->GetHeight())
 	{
 		std::cout << "The computed row is not valid. The line is skipped. Computed row = " << row << std::endl;
