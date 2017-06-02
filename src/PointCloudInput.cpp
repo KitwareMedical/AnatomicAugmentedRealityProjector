@@ -59,7 +59,7 @@ PointCloud PointCloudInput::ComputePointCloud(){
 	bool success = CamInput->Run();
 	if (success == false)
 	{
-		std::cout << "Impossible to start the camera. Analyze stopped." << std::endl;
+		//std::cout << "Impossible to start the camera. Analyze stopped." << std::endl;
 		//return;
 	}
 	CamInput->SetCameraTriggerDelay(.014);
@@ -193,8 +193,8 @@ bool PointCloudInput::ComputePointCloudRow(cv::Mat *pointcloud, cv::Mat *pointcl
 	double row = (1.16 - delay / .019) *this->Projector->GetHeight();
 	if (row <= 0 || row > this->Projector->GetHeight())
 	{
-		std::cout << "The computed row is not valid. The line is skipped. Computed row = " << row << std::endl;
-		return false; // We skip the line
+		//std::cout << "The computed row is not valid. The line is skipped. Computed row = " << row << std::endl;
+		//return false; // We skip the line
 	}
 
 	// Computation of the point used to define the plane of the projector
