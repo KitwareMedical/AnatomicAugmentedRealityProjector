@@ -23,7 +23,7 @@ limitations under the License.
 
 =========================================================================*/
 
-//#define DEBUG_POINTCLOUDS
+#define DEBUG_POINTCLOUDS
 
 #include "io_util.hpp"
 #include "MainWindow.hpp"
@@ -78,6 +78,10 @@ MainWindow::MainWindow( QWidget *parent ) :
   connect( ui->proj_row, SIGNAL( valueChanged( int ) ), this, SLOT( SetProjectorLineRow() ) );
   connect( ui->cam_framerate, SIGNAL( valueChanged( double ) ), this, SLOT( SetCameraFrameRate() ) );
   connect( ui->trigger_delay, SIGNAL(valueChanged(double)), this, SLOT(SetCameraTriggerDelay()));
+  connect( ui->delayParameter1, SIGNAL(valueChanged(double)), this, SLOT(SetDelayParameter1()));
+  connect(ui->delayParameter2, SIGNAL(valueChanged(double)), this, SLOT(SetDelayParameter2()));
+
+
   connect( ui->cam_nbimages, SIGNAL( valueChanged( int ) ), this, SLOT( SetCameraNbImages() ) );
   connect( ui->proj_blue, SIGNAL( valueChanged( int ) ), this, SLOT( SetProjectorBlueColor() ) );
   connect( ui->proj_green, SIGNAL( valueChanged( int ) ), this, SLOT( SetProjectorGreenColor() ) );
@@ -105,6 +109,14 @@ MainWindow::MainWindow( QWidget *parent ) :
     this->Calib.Display();
     }
   std::cout << NNClassifyColors((cv::Mat_<double>(1, 3) << 140,230, 130)) << std::endl;
+}
+
+void MainWindow::SetDelayParameter1(){
+	PCInput.delayParam1 = this->ui->delayParameter1->value();
+}
+
+void MainWindow::SetDelayParameter2(){
+	PCInput.delayParam1 = this->ui->delayParameter2->value();
 }
 
 cv::Mat MainWindow::NNClassifyColors(cv::Mat colors){
@@ -1178,7 +1190,7 @@ void MainWindow::on_analyze_clicked()
     {
     error.PrintErrorTrace();
     }
-  on_analyze_clicked();
+  //on_analyze_clicked();
 
   return;
   }

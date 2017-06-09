@@ -421,6 +421,48 @@
            </layout>
           </item>
           <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_12">
+               <item>
+                 <widget class="QLabel" name="label">
+                   <property name="text">
+                     <string>delayParameter1 </string>
+                   </property>
+                 </widget>
+               </item>
+               <item>
+                 <widget class="QDoubleSpinBox" name="delayParameter1">
+                   <property name="value">
+                     <number>1</number>
+                   </property>
+                 </widget>
+               </item>
+             </layout>
+           </item>
+           <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_21">
+               <item>
+                 <widget class="QLabel" name="label_9">
+                   <property name="text">
+                     <string>delayParameter2</string>
+                   </property>
+                 </widget>
+               </item>
+               <item>
+                 <widget class="QDoubleSpinBox" name="delayParameter2">
+                   <property name="maximum">
+                     <double>.04</double>
+                   </property>
+                   <property name="decimals">
+                     <double>5</double>
+                   </property>
+                   <property name="value">
+                     <double>.03</double>
+                   </property>
+                 </widget>
+               </item>
+             </layout>
+          </item>
+          <item>
            <widget class="QPushButton" name="analyze">
             <property name="text">
              <string>Analyze</string>

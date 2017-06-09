@@ -92,6 +92,8 @@ protected slots:
   void SetCameraTriggerDelay();
   void SetCameraFrameRate();
   void SetCameraNbImages();
+  void SetDelayParameter1();
+  void SetDelayParameter2();
   void SetProjectorBlueColor();
   void SetProjectorGreenColor();
   void SetProjectorRedColor();

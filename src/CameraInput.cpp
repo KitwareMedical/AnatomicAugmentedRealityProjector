@@ -120,6 +120,11 @@ void CameraInput::IncrementTriggerDelay(){
 	}
 	this->SetCameraTriggerDelay(this->delay);
 }
+
+void CameraInput::SetTriggerMode(int mode){
+
+}
+
 void CameraInput::SetCameraTriggerDelay(double delay)
 {
 	Error error;

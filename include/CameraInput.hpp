@@ -42,6 +42,8 @@ public :
   
   void SetCameraTriggerDelay(double delay);
   void IncrementTriggerDelay();
+
+  void SetTriggerMode(int mode);
   
   void SetCameraFrameRate(double framerate);
   double GetCameraFrameRate();

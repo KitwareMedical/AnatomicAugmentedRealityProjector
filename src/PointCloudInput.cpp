@@ -66,10 +66,10 @@ PointCloud PointCloudInput::ComputePointCloud(){
 	cv::Mat mat_color_ref = this->CamInput->GetImageFromBuffer();
 
 	double max_delay = .0119;
-	int numrows = 70;
+	int numrows = 90;
 	double delta = max_delay / numrows;
 
-	cv::Mat pointcloud = cv::Mat(numrows, mat_color_ref.cols, CV_32FC3);
+	cv::Mat pointcloud = cv::Mat::zeros(numrows, mat_color_ref.cols, CV_32FC3);
 	cv::Mat pointcloud_colors = cv::Mat(numrows, mat_color_ref.cols, CV_8UC3);
 
 
@@ -190,7 +190,7 @@ bool PointCloudInput::ComputePointCloudRow(cv::Mat *pointcloud, cv::Mat *pointcl
 		}
 	}
 
-	double row = (1.16 - delay / .019) *this->Projector->GetHeight();
+	double row = (delayParam1 - delay / delayParam2) *this->Projector->GetHeight();
 	if (row <= 0 || row > this->Projector->GetHeight())
 	{
 		//std::cout << "The computed row is not valid. The line is skipped. Computed row = " << row << std::endl;
@@ -233,35 +233,38 @@ bool PointCloudInput::ComputePointCloudRow(cv::Mat *pointcloud, cv::Mat *pointcl
 
 		p = approximate_ray_plane_intersection(this->Calib->T, cameraVector, projectorNormal);
 
+		if (sqrt(p.x*p.x + p.y * p.y + p.z * p.z) < 400){
+
+		
+
+			cv::Vec3f & cloud_point = (*pointcloud).at<cv::Vec3f>(storage_row, (*it_cam_points).x);
+			cloud_point[0] = p.x;
+			cloud_point[1] = -p.y;
+			cloud_point[2] = p.z;
 
 
-		cv::Vec3f & cloud_point = (*pointcloud).at<cv::Vec3f>(storage_row, (*it_cam_points).x);
-		cloud_point[0] = p.x;
-		cloud_point[1] = -p.y;
-		cloud_point[2] = p.z;
+			//std::cout << cloud_point << std::endl;
+			double B = mat_BGR.at<cv::Vec3b>((*it_cam_points).y - 1, (*it_cam_points).x)[0] + mat_BGR.at<cv::Vec3b>((*it_cam_points).y, (*it_cam_points).x)[0] + mat_BGR.at<cv::Vec3b>((*it_cam_points).y + 1, (*it_cam_points).x)[0];
+			double G = mat_BGR.at<cv::Vec3b>((*it_cam_points).y - 1, (*it_cam_points).x)[1] + mat_BGR.at<cv::Vec3b>((*it_cam_points).y, (*it_cam_points).x)[1] + mat_BGR.at<cv::Vec3b>((*it_cam_points).y + 1, (*it_cam_points).x)[1];
+			double R = mat_BGR.at<cv::Vec3b>((*it_cam_points).y - 1, (*it_cam_points).x)[2] + mat_BGR.at<cv::Vec3b>((*it_cam_points).y, (*it_cam_points).x)[2] + mat_BGR.at<cv::Vec3b>((*it_cam_points).y + 1, (*it_cam_points).x)[2];
+			unsigned char vec_B = (B) / 3;
+			unsigned char vec_G = (G) / 3;
+			unsigned char vec_R = (R) / 3;
 
+			cv::Vec3b & cloud_color = (*pointcloud_colors).at<cv::Vec3b>(storage_row, (*it_cam_points).x);
+			cloud_color[0] = vec_B;
+			cloud_color[1] = vec_G;
+			cloud_color[2] = vec_R;
+			color_image.at<cv::Vec3b>((*it_cam_points).y, (*it_cam_points).x) = cv::Vec3b{ vec_B, vec_G, vec_R };
 
-		//std::cout << cloud_point << std::endl;
-		double B = mat_BGR.at<cv::Vec3b>((*it_cam_points).y - 1, (*it_cam_points).x)[0] + mat_BGR.at<cv::Vec3b>((*it_cam_points).y, (*it_cam_points).x)[0] + mat_BGR.at<cv::Vec3b>((*it_cam_points).y + 1, (*it_cam_points).x)[0];
-		double G = mat_BGR.at<cv::Vec3b>((*it_cam_points).y - 1, (*it_cam_points).x)[1] + mat_BGR.at<cv::Vec3b>((*it_cam_points).y, (*it_cam_points).x)[1] + mat_BGR.at<cv::Vec3b>((*it_cam_points).y + 1, (*it_cam_points).x)[1];
-		double R = mat_BGR.at<cv::Vec3b>((*it_cam_points).y - 1, (*it_cam_points).x)[2] + mat_BGR.at<cv::Vec3b>((*it_cam_points).y, (*it_cam_points).x)[2] + mat_BGR.at<cv::Vec3b>((*it_cam_points).y + 1, (*it_cam_points).x)[2];
-		unsigned char vec_B = (B) / 3;
-		unsigned char vec_G = (G) / 3;
-		unsigned char vec_R = (R) / 3;
-
-		cv::Vec3b & cloud_color = (*pointcloud_colors).at<cv::Vec3b>(storage_row, (*it_cam_points).x);
-		cloud_color[0] = vec_B;
-		cloud_color[1] = vec_G;
-		cloud_color[2] = vec_R;
-		color_image.at<cv::Vec3b>((*it_cam_points).y, (*it_cam_points).x) = cv::Vec3b{ vec_B, vec_G, vec_R };
-
-		if (row < 780 && row > 395)
-		{
-			imageTest.at<cv::Vec3b>((*it_cam_points).y, (*it_cam_points).x) = { 0, 255, 0 };
-		}
-		else
-		{
-			imageTest.at<cv::Vec3b>((*it_cam_points).y, (*it_cam_points).x) = { 255, 255, 255 };
+			if (row < 780 && row > 395)
+			{
+				imageTest.at<cv::Vec3b>((*it_cam_points).y, (*it_cam_points).x) = { 0, 255, 0 };
+			}
+			else
+			{
+				imageTest.at<cv::Vec3b>((*it_cam_points).y, (*it_cam_points).x) = { 255, 255, 255 };
+			}
 		}
 	}
 
