@@ -59,7 +59,7 @@ public:
   ~MainWindow();
   cv::Mat NNClassifyColors(cv::Mat colors);
   void NNDensityProbabilityReplacement(cv::Mat pointcloud, cv::Mat pointcloud_BGR, std::vector<cv::Vec3f> *points_B, std::vector<cv::Vec3f> *points_G, std::vector<cv::Vec3f> *points_R, double threshold);
-  
+  void MainWindow::ProjectPointCloud(PointCloud p);
   cv::Point3d approximate_ray_plane_intersection(const cv::Mat & T, const cv::Point3d & vc, const cv::Point3d & vp);
 
   bool ComputePointCloud( cv::Mat *pointcloud, cv::Mat *pointcloud_colors, cv::Mat mat_color_ref, cv::Mat mat_color, cv::Mat imageTest, cv::Mat color_image, double delay );
@@ -101,6 +101,7 @@ protected slots:
 private:
   Ui::MainWindow *ui;
   ProjectorWidget Projector;
+  PointCloud hires;
   CameraInput CamInput;
   PointCloudInput PCInput = PointCloudInput(&CamInput, &Projector, &Calib);
   QTimer *timer;

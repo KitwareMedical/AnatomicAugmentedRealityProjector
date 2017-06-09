@@ -89,6 +89,8 @@ MainWindow::MainWindow( QWidget *parent ) :
 
 
   this->SetCameraFrameRate();
+  this->SetDelayParameter1();
+  this->SetDelayParameter2();
 
   // Timer
   this->timer = new QTimer( this );
@@ -108,7 +110,9 @@ MainWindow::MainWindow( QWidget *parent ) :
     {
     this->Calib.Display();
     }
-  std::cout << NNClassifyColors((cv::Mat_<double>(1, 3) << 140,230, 130)) << std::endl;
+  this->on_proj_displayColor_clicked();
+  hires = PCInput.ComputePointCloud(300);
+  save_pointcloud(hires.points, hires.colors, "hires");
 }
 
 void MainWindow::SetDelayParameter1(){
@@ -116,7 +120,7 @@ void MainWindow::SetDelayParameter1(){
 }
 
 void MainWindow::SetDelayParameter2(){
-	PCInput.delayParam1 = this->ui->delayParameter2->value();
+	PCInput.delayParam2 = this->ui->delayParameter2->value();
 }
 
 cv::Mat MainWindow::NNClassifyColors(cv::Mat colors){
@@ -305,6 +309,37 @@ void MainWindow::on_proj_displayColor_clicked()
   //disconnect projector display signal
   disconnect( &( this->Projector ), SIGNAL( new_image( QPixmap ) ), this, SLOT( _on_new_projector_image( QPixmap ) ) );
   }
+
+void MainWindow::ProjectPointCloud(PointCloud p){
+	cv::Mat result = this->Projector.CreateColoredImage(this->Projector.GetBlueColor(), this->Projector.GetGreenColor(), this->Projector.GetRedColor());
+
+	for (int line = 0; line < p.points.rows; line++){
+		for (int column = 0; column < p.points.cols; column++){
+			int thickness = -1;
+			int lineType = 8;
+			float normalizedLine = line / (float) p.points.rows;
+			cv::Point3d point = p.points.at<cv::Point3f>(line, column);
+			//cv::Vec3b color = cv::Vec3b( 255 * (fmod(point.x + 100, 2) < .5), 255 * (fmod(point.y + 100, 2) < .5),255 * ( fmod(point.z + 100, 2) < .5 ));
+			cv::circle(result,
+				cv::Point2d(column * (2.55 - normalizedLine / 3) - (1 - normalizedLine) * 120, normalizedLine * result.rows),
+				2,
+				p.colors.at<cv::Vec3b>(line, column),
+				thickness,
+				lineType);
+		}
+	}
+
+
+	QPixmap pixmap = QPixmap::fromImage(cvMatToQImage(result));
+	this->Projector.SetPixmap(pixmap);
+
+	connect(&(this->Projector), SIGNAL(new_image(QPixmap)), this, SLOT(_on_new_projector_image(QPixmap)));
+
+	this->Projector.start();
+
+	//disconnect projector display signal
+	disconnect(&(this->Projector), SIGNAL(new_image(QPixmap)), this, SLOT(_on_new_projector_image(QPixmap)));
+}
 
 void MainWindow::on_detect_colors_clicked()
   {
@@ -805,7 +840,7 @@ void MainWindow::on_analyze_clicked()
     }
   this->DisplayCamera();
   QCoreApplication::processEvents();
-  PointCloud pointcloud = this->PCInput.ComputePointCloud();
+  PointCloud pointcloud = this->PCInput.ComputePointCloud(45);
 
   if( !pointcloud.points.data )
     {
@@ -1176,9 +1211,9 @@ void MainWindow::on_analyze_clicked()
   cv::Vec3f intersection_circle;
   intersection_circle = three_planes_intersection( normal_blue, normal_green, normal_red, A_blue, A_green, A_red );
   std::cout << "Intersection_circle : " << intersection_circle << std::endl;
-#ifdef DEBUG_POINTCLOUDS
-  save_pointcloud_plane_intersection( pointcloud.points, pointcloud.colors, normal_blue, normal_green, normal_red, A_blue, A_green, A_red, intersection_circle, 0.15f, "pointcloud_BGR_plane_circles" );
-#endif
+//#ifdef DEBUG_POINTCLOUDS
+  save_pointcloud_plane_intersection( hires.points, hires.colors, normal_blue, normal_green, normal_red, A_blue, A_green, A_red, intersection_circle, 0.15f, "pointcloud_BGR_plane_circles" );
+//#endif
   std::fstream outputFile;
   outputFile.open( TRACKING_OUT_FILE, std::ios_base::app );
   outputFile << "Intersection_circle : " << intersection_circle << "Normals (RGB)" << normal_red << normal_green << normal_blue << "Time: " << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) << std::endl;
@@ -1190,8 +1225,10 @@ void MainWindow::on_analyze_clicked()
     {
     error.PrintErrorTrace();
     }
+  
+  ProjectPointCloud(hires);
+  QCoreApplication::processEvents();
   //on_analyze_clicked();
-
   return;
   }
 
@@ -1898,7 +1935,7 @@ void MainWindow::density_probability( cv::Mat pointcloud, cv::Mat pointcloud_BGR
           }
         }
       }
-    save_pointcloud( pointcloud, pointcloud_colors, name );
+    //save_pointcloud( pointcloud, pointcloud_colors, name );
 }
 
 

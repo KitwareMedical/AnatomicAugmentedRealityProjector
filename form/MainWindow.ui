@@ -431,8 +431,12 @@
                </item>
                <item>
                  <widget class="QDoubleSpinBox" name="delayParameter1">
+                   
+                   <property name="maximum">
+                     <double>1500</double>
+                   </property>
                    <property name="value">
-                     <number>1</number>
+                     <double>530</double>
                    </property>
                  </widget>
                </item>
@@ -450,13 +454,13 @@
                <item>
                  <widget class="QDoubleSpinBox" name="delayParameter2">
                    <property name="maximum">
-                     <double>.04</double>
+                     <double>1500</double>
                    </property>
                    <property name="decimals">
                      <double>5</double>
                    </property>
                    <property name="value">
-                     <double>.03</double>
+                     <double>1300</double>
                    </property>
                  </widget>
                </item>
