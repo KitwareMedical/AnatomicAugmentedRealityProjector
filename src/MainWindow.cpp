@@ -360,8 +360,8 @@ void MainWindow::ProjectPointCloud(PointCloud p){
 
 	connect(&(this->Projector), SIGNAL(new_image(QPixmap)), this, SLOT(_on_new_projector_image(QPixmap)));
 
-	this->Projector.start();
-
+	//this->Projector.start();
+	this->Projector.update();
 	//disconnect projector display signal
 	disconnect(&(this->Projector), SIGNAL(new_image(QPixmap)), this, SLOT(_on_new_projector_image(QPixmap)));
 }
