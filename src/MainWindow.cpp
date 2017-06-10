@@ -368,6 +368,9 @@ void MainWindow::ProjectPointCloud(PointCloud p){
 
 void MainWindow::on_detect_colors_clicked()
   {
+  hires = PCInput.ComputePointCloud(300);
+  save_pointcloud(hires.points, hires.colors, "hires");
+  return;
   /***********************Start the camera***********************/
   bool success = CamInput.Run();
   if( success == false )
