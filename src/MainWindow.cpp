@@ -23,7 +23,7 @@ limitations under the License.
 
 =========================================================================*/
 
-#define DEBUG_POINTCLOUDS
+//#define DEBUG_POINTCLOUDS
 
 #include "io_util.hpp"
 #include "MainWindow.hpp"
@@ -309,7 +309,32 @@ void MainWindow::on_proj_displayColor_clicked()
   //disconnect projector display signal
   disconnect( &( this->Projector ), SIGNAL( new_image( QPixmap ) ), this, SLOT( _on_new_projector_image( QPixmap ) ) );
   }
+void MainWindow::PutImageOnPointCloud(PointCloud p, cv::Mat Image, cv::Vec3f origin, cv::Vec3f u1, cv::Vec3f u2, cv::Vec3f u3){
+	for (int line = 0; line < p.points.rows; line++){
+		for (int column = 0; column < p.points.cols; column++){
+			
+			cv::Vec3f point = p.points.at<cv::Vec3f>(line, column);
+			cv::Vec3f displacement = point - origin;
 
+			float x = displacement.dot(u3);
+			float y = displacement.dot(u2);
+
+			x += 8.5;
+			y -= 4.5;
+			x *= 10;
+			x += Image.rows / 2;
+			y *= 10;
+			
+			if ((x >= 0 && y >= 0 && x < Image.cols &&  y < Image.rows)){
+				//std::cout << x << " " << y << std::endl;
+				p.colors.at<cv::Vec3b>(line, column) = cv::Vec3b(x, y, 255);//Image.at<cv::Vec3b>(x, y);
+            } else {
+				p.colors.at<cv::Vec3b>(line, column) = cv::Vec3b(255, 255, 255);
+			}
+
+		}
+	}
+}
 void MainWindow::ProjectPointCloud(PointCloud p){
 	cv::Mat result = this->Projector.CreateColoredImage(this->Projector.GetBlueColor(), this->Projector.GetGreenColor(), this->Projector.GetRedColor());
 
@@ -1212,7 +1237,7 @@ void MainWindow::on_analyze_clicked()
   intersection_circle = three_planes_intersection( normal_blue, normal_green, normal_red, A_blue, A_green, A_red );
   std::cout << "Intersection_circle : " << intersection_circle << std::endl;
 //#ifdef DEBUG_POINTCLOUDS
-  save_pointcloud_plane_intersection( hires.points, hires.colors, normal_blue, normal_green, normal_red, A_blue, A_green, A_red, intersection_circle, 0.15f, "pointcloud_BGR_plane_circles" );
+//  save_pointcloud_plane_intersection( hires.points, hires.colors, normal_blue, normal_green, normal_red, A_blue, A_green, A_red, intersection_circle, 0.15f, "pointcloud_BGR_plane_circles" );
 //#endif
   std::fstream outputFile;
   outputFile.open( TRACKING_OUT_FILE, std::ios_base::app );
@@ -1225,10 +1250,15 @@ void MainWindow::on_analyze_clicked()
     {
     error.PrintErrorTrace();
     }
+  PutImageOnPointCloud(hires, cv::Mat::zeros(100, 100, CV_8UC3), intersection_circle, normal_red, normal_green, normal_blue);
+
+  
   
   ProjectPointCloud(hires);
   QCoreApplication::processEvents();
-  //on_analyze_clicked();
+  QTimer::singleShot(200, [=](){
+	  this->on_analyze_clicked();
+  });
   return;
   }
 
@@ -1482,6 +1512,12 @@ std::vector<cv::Vec3f> MainWindow::ransac( std::vector<cv::Vec3f> points, int mi
       }
     }
   //std::cout << "Ransac : best_inliers : " << best_inliers << std::endl;
+
+  best_normal /= sqrt(best_normal.dot(best_normal));
+
+  if (best_normal[2] > 0){
+      best_normal *= -1;
+  }
   res.push_back( best_normal );
   res.push_back( best_A );
   return res;
