@@ -77,9 +77,8 @@ PointCloud PointCloudInput::ComputePointCloud(int numrows){
 	std::cout << "Start : 3D reconstruction of every line" << std::endl;
 	// imageTest is used to control which points have been used on the projector for the reconstruction
 	cv::Mat imageTest = cv::Mat::zeros(mat_color_ref.rows, mat_color_ref.cols, CV_8UC3);
-	bool valid;
 	QString imagename;
-	cv::Mat crt_mat, prev_mat;
+	cv::Mat crt_mat;
 	cv::Mat color_image = cv::Mat::zeros(mat_color_ref.rows, mat_color_ref.cols, CV_8UC3);
 
 	
@@ -87,15 +86,13 @@ PointCloud PointCloudInput::ComputePointCloud(int numrows){
 	this->CamInput->SetCameraTriggerDelay(0);
 	for (int depth_map_row = 0; depth_map_row < numrows; depth_map_row++)
 	{
-		//this->DisplayCamera();
-		//QCoreApplication::processEvents();
-		prev_mat = crt_mat;
+		
 		crt_mat = this->CamInput->GetImageFromBuffer();
-		double delay = depth_map_row * delta;
+		double nextDelay = (depth_map_row + 1) * delta;
 		//begin changing the delay for the next image before processing the current image. There are silent errors
 		//if you take a picture too soon after changing the delay
-		this->CamInput->SetCameraTriggerDelay(delay);
-		valid = ComputePointCloudRow(&pointcloud, &pointcloud_colors, mat_color_ref, crt_mat, imageTest, color_image, delay - delta, depth_map_row);
+		this->CamInput->SetCameraTriggerDelay(nextDelay);
+		ComputePointCloudRow(&pointcloud, &pointcloud_colors, mat_color_ref, crt_mat, imageTest, color_image, nextDelay - delta, depth_map_row);
 	}
 
 	//imagename = QString( "C:\\Camera_Projector_Calibration\\Tests_publication\\color_image.png" );

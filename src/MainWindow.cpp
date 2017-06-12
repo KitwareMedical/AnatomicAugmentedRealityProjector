@@ -875,9 +875,9 @@ void MainWindow::on_analyze_clicked()
     qCritical() << "ERROR, reconstruction failed\n";
     }
   
-#ifdef DEBUG_POINTCLOUDS
-  save_pointcloud( pointcloud.points, pointcloud.colors, "pointcloud_BGR_original" );
-#endif
+  if (this->ui->savePointClouds->isChecked()){
+    save_pointcloud( pointcloud.points, pointcloud.colors, "pointcloud_BGR_original" );
+  }
   /***************************Finding the blue, red and green planes*****************************/
   std::vector<cv::Vec3f> points_B, points_G, points_R;
   points_B.clear();
@@ -1122,9 +1122,9 @@ void MainWindow::on_analyze_clicked()
       good_G.push_back( *iter );
       }
     }
-#ifdef DEBUG_POINTCLOUDS
-  save_pointcloud_centers( pointcloud.points, pointcloud.colors, center, center, center, 5.f, "pointcloud_BGR_selected_points_M1" );
-#endif
+  if (this->ui->savePointClouds->isChecked()){
+    save_pointcloud_centers( pointcloud.points, pointcloud.colors, center, center, center, 5.f, "pointcloud_BGR_selected_points_M1" );
+  }
   //std::cout << "Size of blue vector : " << good_B.size() << std::endl;
   //std::cout << "Size of red vector : " << good_R.size() << std::endl;
   //std::cout << "Size of green vector : " << good_G.size() << std::endl;
@@ -1239,9 +1239,9 @@ void MainWindow::on_analyze_clicked()
   cv::Vec3f intersection_circle;
   intersection_circle = three_planes_intersection( normal_blue, normal_green, normal_red, A_blue, A_green, A_red );
   std::cout << "Intersection_circle : " << intersection_circle << std::endl;
-//#ifdef DEBUG_POINTCLOUDS
+
 //  save_pointcloud_plane_intersection( hires.points, hires.colors, normal_blue, normal_green, normal_red, A_blue, A_green, A_red, intersection_circle, 0.15f, "pointcloud_BGR_plane_circles" );
-//#endif
+
   std::fstream outputFile;
   outputFile.open( TRACKING_OUT_FILE, std::ios_base::app );
   outputFile << "Intersection_circle : " << intersection_circle << "Normals (RGB)" << normal_red << normal_green << normal_blue << "Time: " << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) << std::endl;
@@ -1253,15 +1253,45 @@ void MainWindow::on_analyze_clicked()
     {
     error.PrintErrorTrace();
     }
-  PutImageOnPointCloud(hires, cv::Mat::zeros(100, 100, CV_8UC3), intersection_circle, normal_red, normal_green, normal_blue);
 
+  if (this->ui->drawBox->isChecked()){
+
+      PutImageOnPointCloud(hires, cv::Mat::zeros(100, 100, CV_8UC3), intersection_circle, normal_red, normal_green, normal_blue);
+  }
   
+  if (this->ui->drawArt->isChecked()){
+	  for (int line = 0; line < hires.points.rows; line++){
+		  for (int column = 0; column < hires.points.cols; column++){
+
+			  cv::Vec3f point = hires.points.at<cv::Vec3f>(line, column);
+			  cv::Vec3f displacement = point - intersection_circle;
+
+			  float x = displacement.dot(normal_blue);
+			  float y = displacement.dot(normal_green);
+			  float z = displacement.dot(normal_red);
+
+			  x += 8.5;
+			  y -= 4.5;
+			  z += 2;
+			  
+
+
+			  if ((x*x + y*y + z*z ) < 14){
+				  //std::cout << x << " " << y << std::endl;
+				  hires.colors.at<cv::Vec3b>(line, column) = cv::Vec3b(0, 0, 255);//Image.at<cv::Vec3b>(x, y);
+			  }
+
+		  }
+	  }
+  }
   
   ProjectPointCloud(hires);
   QCoreApplication::processEvents();
+  if (this->ui->loop->isChecked()){
   QTimer::singleShot(200, [=](){
 	  this->on_analyze_clicked();
   });
+  }
   return;
   }
 
@@ -1634,9 +1664,9 @@ void MainWindow::NNDensityProbabilityReplacement(cv::Mat pointcloud, cv::Mat poi
 			}
 		}
 	}
-	#ifdef DEBUG_POINTCLOUDS
-	save_pointcloud(pointcloud, pt_BGR, "pointcloud_BGR_BGR");
-	#endif
+	if (this->ui->savePointClouds->isChecked()){
+	    save_pointcloud(pointcloud, pt_BGR, "pointcloud_BGR_BGR");
+	}
 	sum_B = sum_B / nb_B;
 	sum_G = sum_G / nb_G;
 	sum_R = sum_R / nb_R;

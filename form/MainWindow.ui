@@ -290,7 +290,7 @@
           <item>
            <widget class="QPushButton" name="detect_colors">
             <property name="text">
-             <string>Detect colors</string>
+             <string>Recapture high density pointcloud</string>
             </property>
            </widget>
           </item>
@@ -443,6 +443,28 @@
              </layout>
            </item>
            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_132">
+               <item>
+                 <widget class="QLabel" name="labe3l">
+                   <property name="text">
+                     <string>delayParameter3 </string>
+                   </property>
+                 </widget>
+               </item>
+               <item>
+                 <widget class="QDoubleSpinBox" name="delayParameter3">
+
+                   <property name="maximum">
+                     <double>1500</double>
+                   </property>
+                   <property name="value">
+                     <double>900</double>
+                   </property>
+                 </widget>
+               </item>
+             </layout>
+           </item>
+           <item>
              <layout class="QHBoxLayout" name="horizontalLayout_21">
                <item>
                  <widget class="QLabel" name="label_9">
@@ -473,6 +495,34 @@
             </property>
            </widget>
           </item>
+           <item>
+             <widget class="QCheckBox" name="loop">
+               <property name="text">
+                 <string>loop</string>
+               </property>
+             </widget>
+           </item>
+           <item>
+             <widget class="QCheckBox" name="drawBox">
+               <property name="text">
+                 <string>draw box</string>
+               </property>
+             </widget>
+           </item>
+           <item>
+             <widget class="QCheckBox" name="savePointClouds">
+               <property name="text">
+                 <string>save intermediate point clouds</string>
+               </property>
+             </widget>
+           </item>
+           <item>
+             <widget class="QCheckBox" name="drawArt">
+               <property name="text">
+                 <string>draw art</string>
+               </property>
+             </widget>
+           </item>
          </layout>
         </widget>
        </item>
