@@ -131,6 +131,7 @@ bool CameraInput::Stop()
     error.PrintErrorTrace();
     return false;
     }
+  return true;
 }
 
 void CameraInput::IncrementTriggerDelay(){
