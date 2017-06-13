@@ -57,6 +57,7 @@ class MainWindow : public QMainWindow
 public:
   explicit MainWindow( QWidget *parent = 0 );
   ~MainWindow();
+
   cv::Mat NNClassifyColors(cv::Mat colors);
   void NNDensityProbabilityReplacement(cv::Mat pointcloud, cv::Mat pointcloud_BGR, std::vector<cv::Vec3f> *points_B, std::vector<cv::Vec3f> *points_G, std::vector<cv::Vec3f> *points_R, double threshold);
   void MainWindow::ProjectPointCloud(PointCloud p);
@@ -68,6 +69,7 @@ public:
   void SetCurrentMat( cv::Mat currentMat ) { this->CurrentMat = currentMat; };
   std::vector<cv::Vec3f> ransac( std::vector<cv::Vec3f> points, int min, int iter, float thres, int min_inliers, const cv::Vec3f normal_B = cv::Vec3f( 0, 0, 0 ), const cv::Vec3f normal_R = cv::Vec3f( 0, 0, 0 ) );
   void density_probability( cv::Mat pointcloud, cv::Mat pointcloud_BGR, std::vector<cv::Vec3f> *points_B, std::vector<cv::Vec3f> *points_G, std::vector<cv::Vec3f> *points_R, double threshold );
+
   cv::Vec3f three_planes_intersection( cv::Vec3f n1, cv::Vec3f n2, cv::Vec3f n3, cv::Vec3f x1, cv::Vec3f x2, cv::Vec3f x3 );
   float compute_maximum( std::vector<cv::Vec3f> points, int axis, float min, float max, float variance, float interval_min = -9999, float interval_max = 9999 );
   void save_pointcloud_plane_intersection( cv::Mat pointcloud, cv::Mat pointcloud_colors, cv::Vec3f normal_B, cv::Vec3f normal_G, cv::Vec3f normal_R, cv::Vec3f A_B, cv::Vec3f A_G, cv::Vec3f A_R, cv::Vec3f intersection, float size_circles, QString name );
@@ -110,7 +112,7 @@ private:
   QTimer *timer;
   QTimer *AnalyzeTimer;
   CalibrationData Calib;
-  
+
   cv::Mat CurrentMat;
   int TimerShots;
   float max_x, max_y, max_z, min_x, min_y, min_z;
