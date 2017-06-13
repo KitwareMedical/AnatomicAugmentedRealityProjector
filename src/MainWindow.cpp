@@ -87,7 +87,7 @@ MainWindow::MainWindow( QWidget *parent ) :
   connect( ui->proj_red, SIGNAL( valueChanged( int ) ), this, SLOT( SetProjectorRedColor() ) );
 
 
-  this->SetCameraFrameRate();
+  //this->SetCameraFrameRate();
   this->SetDelayParameter1();
   this->SetDelayParameter2();
 
@@ -116,6 +116,13 @@ MainWindow::MainWindow( QWidget *parent ) :
     this->Calib.Display();
     }
   this->on_proj_displayColor_clicked();
+
+  bool success = this->CamInput.Run();
+  if( success == false )
+    {
+    std::cout << "Impossible to start the camera." << std::endl;
+    }
+
   hires = PCInput.ComputePointCloud(300);
   save_pointcloud(hires.points, hires.colors, "hires");
 }
@@ -778,12 +785,6 @@ void MainWindow::on_detect_colors_clicked()
 
 void MainWindow::on_cam_display_clicked()
 {
-  bool success = CamInput.Run();
-  if( success == false )
-    {
-    //std::cout << "Impossible to start the camera. Analyze stopped." << std::endl;
-    return;
-    }
   this->timer->start();
 }
 
@@ -868,13 +869,7 @@ void MainWindow::on_analyze_clicked()
   connect( ui->analyze, SIGNAL( clicked() ), this, SLOT( StopAnalyze() ) );
 
   /***********************Start the camera***********************/
-  CamInput.SetCameraTriggerDelay(0);
-  bool success = CamInput.Run();
-  if( success == false )
-    {
-    std::cout << "Impossible to start the camera. Analyze stopped." << std::endl;
-    //return;
-    }
+  CamInput.SetCameraTriggerDelay( 0 );
   this->DisplayCamera();
 
   this->AnalyzeTimer->start();
@@ -1311,8 +1306,6 @@ void MainWindow::Analyze()
 void MainWindow::StopAnalyze()
 {
   this->AnalyzeTimer->stop();
-
-  bool success = CamInput.Stop();
 
   ui->analyze->setText( "Analyze" );
   disconnect( ui->analyze, SIGNAL( clicked() ), this, SLOT( StopAnalyze() ) );

@@ -38,6 +38,8 @@ public :
   CameraInput();
   ~CameraInput();
 
+  bool Configure();
+
   bool Run(); // return true if a camera was found and successfully started
   bool Stop();
 

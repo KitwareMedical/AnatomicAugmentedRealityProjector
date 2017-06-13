@@ -55,13 +55,6 @@ PointCloudInput::~PointCloudInput()
 }
 
 PointCloud PointCloudInput::ComputePointCloud(int numrows){
-	
-	bool success = CamInput->Run();
-	if (success == false)
-	{
-		//std::cout << "Impossible to start the camera. Analyze stopped." << std::endl;
-		//return;
-	}
 	CamInput->SetCameraTriggerDelay(.014);
 	cv::Mat mat_color_ref = this->CamInput->GetImageFromBuffer();
 
