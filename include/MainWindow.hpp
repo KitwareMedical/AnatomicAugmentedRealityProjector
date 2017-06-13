@@ -85,6 +85,8 @@ protected slots:
   void _on_new_projector_image(QPixmap image);
 
   void DisplayCamera();
+  void Analyze();
+  void StopAnalyze();
 
   void SetProjectorHeight();
   void SetProjectorWidth();

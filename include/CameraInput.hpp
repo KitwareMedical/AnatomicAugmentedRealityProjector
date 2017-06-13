@@ -39,7 +39,8 @@ public :
   ~CameraInput();
 
   bool Run(); // return true if a camera was found and successfully started
-  
+  bool Stop();
+
   void SetCameraTriggerDelay(double delay);
   void IncrementTriggerDelay();
 

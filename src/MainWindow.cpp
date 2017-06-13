@@ -98,6 +98,12 @@ MainWindow::MainWindow( QWidget *parent ) :
   this->timer->setInterval( 5 );
   this->connect( timer, SIGNAL( timeout() ), SLOT( DisplayCamera() ));
 
+  // AnalyzeTimer
+  this->AnalyzeTimer = new QTimer( this );
+  this->AnalyzeTimer->setSingleShot( false );
+  this->AnalyzeTimer->setInterval( 200 );
+  this->connect( AnalyzeTimer, SIGNAL( timeout() ), SLOT( Analyze() ) );
+
   CalibrationData calib;
   QString calibrationFile = CAMERA_CALIB_FILE_LOCATION;
 
@@ -857,7 +863,11 @@ void MainWindow::SetProjectorRedColor()
   }
 
 void MainWindow::on_analyze_clicked()
-  {
+{
+  ui->analyze->setText( "Stop" );
+  disconnect( ui->analyze, SIGNAL( clicked() ), this, SLOT( on_analyze_clicked() ) );
+  connect( ui->analyze, SIGNAL( clicked() ), this, SLOT( StopAnalyze() ) );
+
   /***********************Start the camera***********************/
   CamInput.SetCameraTriggerDelay(0);
   bool success = CamInput.Run();
@@ -867,6 +877,14 @@ void MainWindow::on_analyze_clicked()
     //return;
     }
   this->DisplayCamera();
+
+  this->AnalyzeTimer->start();
+
+  return;
+}
+
+void MainWindow::Analyze()
+{
   QCoreApplication::processEvents();
   PointCloud pointcloud = this->PCInput.ComputePointCloud(45);
 
@@ -1247,13 +1265,6 @@ void MainWindow::on_analyze_clicked()
   outputFile << "Intersection_circle : " << intersection_circle << "Normals (RGB)" << normal_red << normal_green << normal_blue << "Time: " << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) << std::endl;
   outputFile.close();
 
-  /***********************Stop the camera***********************/
-  FlyCapture2::Error error = CamInput.Camera.StopCapture();
-  if (error != FlyCapture2::PGRERROR_OK)
-    {
-    error.PrintErrorTrace();
-    }
-
   if (this->ui->drawBox->isChecked()){
 
       PutImageOnPointCloud(hires, cv::Mat::zeros(100, 100, CV_8UC3), intersection_circle, normal_red, normal_green, normal_blue);
@@ -1287,13 +1298,28 @@ void MainWindow::on_analyze_clicked()
   
   ProjectPointCloud(hires);
   QCoreApplication::processEvents();
-  if (this->ui->loop->isChecked()){
-  QTimer::singleShot(200, [=](){
-	  this->on_analyze_clicked();
-  });
-  }
+  if (this->ui->loop->isChecked())
+    {
+    this->AnalyzeTimer->start();
+    }
+  else
+    {
+    this->StopAnalyze();
+    }
   return;
-  }
+}
+
+void MainWindow::StopAnalyze()
+{
+  this->AnalyzeTimer->stop();
+
+  bool success = CamInput.Stop();
+
+  ui->analyze->setText( "Analyze" );
+  disconnect( ui->analyze, SIGNAL( clicked() ), this, SLOT( StopAnalyze() ) );
+  connect( ui->analyze, SIGNAL( clicked() ), this, SLOT( on_analyze_clicked() ) );
+  return;
+}
 
 cv::Point3d MainWindow::approximate_ray_plane_intersection(const cv::Mat & T, const cv::Point3d & vc, const cv::Point3d & vp)
   {

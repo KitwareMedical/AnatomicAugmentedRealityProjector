@@ -113,6 +113,26 @@ bool CameraInput::Run()
   }
   return true;
 }
+
+bool CameraInput::Stop()
+{
+  /***********************Stop the camera***********************/
+  BusManager busMgr;
+
+  FlyCapture2::Error error = Camera.StopCapture();
+  if( error != FlyCapture2::PGRERROR_OK )
+    {
+    error.PrintErrorTrace();
+    }
+
+  error = Camera.Disconnect();
+  if( error != PGRERROR_OK )
+    {
+    error.PrintErrorTrace();
+    return false;
+    }
+}
+
 void CameraInput::IncrementTriggerDelay(){
 	this->delay += .0002;
 	if (this->delay > .011){
