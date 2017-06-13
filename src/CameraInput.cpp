@@ -59,6 +59,126 @@ CameraInput::~CameraInput()
   }
 }
 
+bool CameraInput::Configure()
+{
+  Error error;
+  Property prop;
+
+  /********** Custom Video Mode : Mode 2 - RAW8 pixel type **********/
+
+  const Mode k_fmt7Mode = MODE_2;
+  const PixelFormat k_fmt7PixFmt = PIXEL_FORMAT_RAW8;
+
+  // Query for available Format 7 modes
+  Format7Info fmt7Info;
+  bool supported;
+  fmt7Info.mode = k_fmt7Mode;
+  error = Camera.GetFormat7Info( &fmt7Info, &supported );
+  if( error != PGRERROR_OK )
+    {
+    error.PrintErrorTrace();
+    return false;
+    }
+  if( ( k_fmt7PixFmt & fmt7Info.pixelFormatBitField ) == 0 )
+    {
+    // Pixel format not supported!
+    std::cout << "Pixel format is not supported" << std::endl;
+    return false;
+    }
+
+  Format7ImageSettings fmt7ImageSettings;
+  fmt7ImageSettings.mode = k_fmt7Mode;
+  fmt7ImageSettings.offsetX = 0;
+  fmt7ImageSettings.offsetY = 0;
+  fmt7ImageSettings.width = fmt7Info.maxWidth;
+  fmt7ImageSettings.height = fmt7Info.maxHeight;
+  fmt7ImageSettings.pixelFormat = k_fmt7PixFmt;
+
+  bool valid;
+  Format7PacketInfo fmt7PacketInfo;
+
+  // Validate the settings to make sure that they are valid
+  error = Camera.ValidateFormat7Settings(
+    &fmt7ImageSettings,
+    &valid,
+    &fmt7PacketInfo );
+  if( error != PGRERROR_OK )
+    {
+    error.PrintErrorTrace();
+    return false;
+    }
+
+  if( !valid )
+    {
+    // Settings are not valid
+    std::cout << "Format7 settings are not valid" << std::endl;
+    return false;
+    }
+
+  // Set the settings to the camera
+  error = Camera.SetFormat7Configuration(
+    &fmt7ImageSettings,
+    fmt7PacketInfo.recommendedBytesPerPacket );
+  if( error != PGRERROR_OK )
+    {
+    error.PrintErrorTrace();
+    return false;
+    }
+
+  /********** Advanced Camera Settings : Shutter Min=1 Max=2 (=0.009ms) **********/
+  prop.type = SHUTTER;
+  prop.onOff = true;
+  prop.autoManualMode = false;
+  prop.absControl = true;
+  prop.absValue = 0.009f;
+  error = Camera.SetProperty( &prop );
+  if( error != PGRERROR_OK )
+    {
+    error.PrintErrorTrace();
+    return false;
+    }
+
+  /********** Trigger Enable, Mode 0 Parameter 0, trigger input source = GPIO0, Trigger Delay Enable = 0 **********/
+  TriggerMode mTrigger;
+  mTrigger.mode = 0;
+  mTrigger.source = 0;
+  mTrigger.parameter = 0;
+  mTrigger.onOff = true;
+  mTrigger.polarity = 1;
+  error = Camera.SetTriggerMode( &mTrigger );
+  if( error != PGRERROR_OK )
+    {
+    error.PrintErrorTrace();
+    return false;
+    }
+  this->SetCameraTriggerDelay( 0.0 );
+
+  /********** Camera Settings : Brightness = 0% && Exposure = -2.0 EV **********/
+  prop.type = BRIGHTNESS;
+  prop.absControl = true;
+  prop.absValue = 0;
+  error = Camera.SetProperty( &prop );
+  if( error != PGRERROR_OK )
+    {
+    error.PrintErrorTrace();
+    return false;
+    }
+
+  prop.type = AUTO_EXPOSURE;
+  prop.onOff = true;
+  prop.autoManualMode = false;
+  prop.absControl = true;
+  prop.absValue = -2.0;
+  error = Camera.SetProperty( &prop );
+  if( error != PGRERROR_OK )
+    {
+    error.PrintErrorTrace();
+    return false;
+    }
+
+  return true;
+}
+
 bool CameraInput::Run()
 {
   Error error;
@@ -98,6 +218,7 @@ bool CameraInput::Run()
     return false;
   }
 
+  this->Configure();
   //this->SetCameraFrameRate(this->FrameRate);
 
   error = Camera.StartCapture();
@@ -111,6 +232,18 @@ bool CameraInput::Run()
     std::cout << "Failed to start image capture" << std::endl;
     return false;
   }
+
+  // Retrieve frame rate property
+  Property frmRate;
+  frmRate.type = FRAME_RATE;
+  error = Camera.GetProperty( &frmRate );
+  if( error != PGRERROR_OK )
+    {
+    error.PrintErrorTrace();
+    return false;
+    }
+
+  std::cout << "Frame rate is " << std::fixed << std::setprecision( 2 ) << frmRate.absValue << " fps" << std::endl;
   return true;
 }
 
