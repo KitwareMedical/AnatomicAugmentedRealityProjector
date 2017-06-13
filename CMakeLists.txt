@@ -52,14 +52,17 @@ set( source_files
   src/io_util.cpp
   src/Main.cpp
   src/MainWindow.cpp
+  src/PointCloudInput.cpp
   src/ProjectorWidget.cpp
   )
 
 set( include_files
   include/CalibrationData.hpp
   include/CameraInput.hpp
+  include/FileConfiguration.h
   include/io_util.hpp
   include/MainWindow.hpp
+  include/PointCloudInput.hpp
   include/ProjectorWidget.hpp
   )
 

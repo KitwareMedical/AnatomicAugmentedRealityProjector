@@ -22,6 +22,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 =========================================================================*/
+#ifndef CAMERAINPUT_HPP
+#define CAMERAINPUT_HPP
 
 #include "FlyCapture2.h"
 
@@ -37,6 +39,13 @@ public :
   ~CameraInput();
 
   bool Run(); // return true if a camera was found and successfully started
+  bool Stop();
+
+  void SetCameraTriggerDelay(double delay);
+  void IncrementTriggerDelay();
+
+  void SetTriggerMode(int mode);
+  
   void SetCameraFrameRate(double framerate);
   double GetCameraFrameRate();
   void FindTopBottomLines( cv::Mat mat_color_ref, cv::Mat mat_color );
@@ -63,9 +72,14 @@ public :
 
 private :
   //double FrameRate;
+  double delay = 0;
+	
   int NbImages;
   int TopLine;
   int BottomLine;
   std::vector<cv::Mat> FrameBuffer;
   int BufferSize;
 };
+
+
+#endif

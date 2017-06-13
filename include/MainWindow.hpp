@@ -29,7 +29,7 @@ limitations under the License.
 #include "ProjectorWidget.hpp"
 #include "CameraInput.hpp"
 #include "CalibrationData.hpp"
-
+#include "PointCloudInput.hpp"
 #include <qgraphicsscene.h>
 #include <QMainWindow>
 #include <QLabel>
@@ -57,15 +57,19 @@ class MainWindow : public QMainWindow
 public:
   explicit MainWindow( QWidget *parent = 0 );
   ~MainWindow();
-  cv::Point3d approximate_ray_plane_intersection( const cv::Mat & Rt, const cv::Mat & T,
-    const cv::Point3d & vc, const cv::Point3d & qc, const cv::Point3d & vp, const cv::Point3d & qp );
-  bool ComputePointCloud( cv::Mat *pointcloud, cv::Mat *pointcloud_colors, cv::Mat mat_color_ref, cv::Mat mat_color, cv::Mat imageTest, cv::Mat color_image );
+
+  cv::Mat NNClassifyColors(cv::Mat colors);
+  void NNDensityProbabilityReplacement(cv::Mat pointcloud, cv::Mat pointcloud_BGR, std::vector<cv::Vec3f> *points_B, std::vector<cv::Vec3f> *points_G, std::vector<cv::Vec3f> *points_R, double threshold);
+  void MainWindow::ProjectPointCloud(PointCloud p);
+  void MainWindow::PutImageOnPointCloud(PointCloud p, cv::Mat Image, cv::Vec3f Origin, cv::Vec3f u1, cv::Vec3f u2, cv::Vec3f u3);
+  cv::Point3d approximate_ray_plane_intersection(const cv::Mat & T, const cv::Point3d & vc, const cv::Point3d & vp);
+
+  bool ComputePointCloud( cv::Mat *pointcloud, cv::Mat *pointcloud_colors, cv::Mat mat_color_ref, cv::Mat mat_color, cv::Mat imageTest, cv::Mat color_image, double delay );
   cv::Mat GetCurrentMat() const { return this->CurrentMat; };
   void SetCurrentMat( cv::Mat currentMat ) { this->CurrentMat = currentMat; };
-  int GetTimerShots() const { return this->TimerShots; };
-  void SetTimerShots( int timerShots ) { this->TimerShots = timerShots; };
   std::vector<cv::Vec3f> ransac( std::vector<cv::Vec3f> points, int min, int iter, float thres, int min_inliers, const cv::Vec3f normal_B = cv::Vec3f( 0, 0, 0 ), const cv::Vec3f normal_R = cv::Vec3f( 0, 0, 0 ) );
-  void density_probability( cv::Mat pointcloud, cv::Mat pointcloud_BGR, std::vector<cv::Vec3f> *points_B, std::vector<cv::Vec3f> *points_G, std::vector<cv::Vec3f> *points_R );
+  void density_probability( cv::Mat pointcloud, cv::Mat pointcloud_BGR, std::vector<cv::Vec3f> *points_B, std::vector<cv::Vec3f> *points_G, std::vector<cv::Vec3f> *points_R, double threshold );
+
   cv::Vec3f three_planes_intersection( cv::Vec3f n1, cv::Vec3f n2, cv::Vec3f n3, cv::Vec3f x1, cv::Vec3f x2, cv::Vec3f x3 );
   float compute_maximum( std::vector<cv::Vec3f> points, int axis, float min, float max, float variance, float interval_min = -9999, float interval_max = 9999 );
   void save_pointcloud_plane_intersection( cv::Mat pointcloud, cv::Mat pointcloud_colors, cv::Vec3f normal_B, cv::Vec3f normal_G, cv::Vec3f normal_R, cv::Vec3f A_B, cv::Vec3f A_G, cv::Vec3f A_R, cv::Vec3f intersection, float size_circles, QString name );
@@ -83,13 +87,18 @@ protected slots:
   void _on_new_projector_image(QPixmap image);
 
   void DisplayCamera();
+  void Analyze();
+  void StopAnalyze();
 
   void SetProjectorHeight();
   void SetProjectorWidth();
   void SetProjectorLineThickness();
   void SetProjectorLineRow();
+  void SetCameraTriggerDelay();
   void SetCameraFrameRate();
   void SetCameraNbImages();
+  void SetDelayParameter1();
+  void SetDelayParameter2();
   void SetProjectorBlueColor();
   void SetProjectorGreenColor();
   void SetProjectorRedColor();
@@ -97,10 +106,13 @@ protected slots:
 private:
   Ui::MainWindow *ui;
   ProjectorWidget Projector;
+  PointCloud hires;
   CameraInput CamInput;
+  PointCloudInput PCInput = PointCloudInput(&CamInput, &Projector, &Calib);
   QTimer *timer;
   QTimer *AnalyzeTimer;
   CalibrationData Calib;
+
   cv::Mat CurrentMat;
   int TimerShots;
   float max_x, max_y, max_z, min_x, min_y, min_z;

@@ -71,7 +71,7 @@ bool io_util::write_ply(const std::string & filename, cv::Mat const& pointcloud_
   for (std::vector<int>::const_iterator iter = points_index.begin(); iter != points_index.end(); iter++)
   {
     cv::Vec3f const& p = points_data[*iter];
-    if (p[2] > 0)
+    if (p[2] > -10000)
     {
       j++;
     }
@@ -100,8 +100,8 @@ bool io_util::write_ply(const std::string & filename, cv::Mat const& pointcloud_
   {
     cv::Vec3f const& p = points_data[*iter];
     // We only keep the points corresponding to the line we are reconstructing
-    if (p[2] > 0)
-    {
+	if (p[2] > -10000)
+	{
       if (binary)
       {
         outfile.write(reinterpret_cast<const char *>(&(p[0])), sizeof(float));
