@@ -30,36 +30,35 @@ limitations under the License.
 #include "CameraInput.hpp"
 #include "CalibrationData.hpp"
 
-struct PointCloud {
-     cv::Mat points;
-	 cv::Mat colors;
+
+struct PointCloud
+{
+  cv::Mat points;
+  cv::Mat colors;
 };
 
-class PointCloudInput {
+class PointCloudInput
+{
+public:
+  PointCloudInput( CameraInput* CamInput, ProjectorWidget* Projector, CalibrationData* Calib );
+  ~PointCloudInput();
+  cv::Point3d approximate_ray_plane_intersection( const cv::Mat & T, const cv::Point3d & vc, const cv::Point3d & vp );
+  PointCloud ComputePointCloud( int numrows );
+  bool ComputePointCloudRow( cv::Mat *pointcloud, cv::Mat *pointcloud_colors, cv::Mat mat_color_ref, cv::Mat mat_color, cv::Mat imageTest, cv::Mat color_image, double delay, int row );
+  cv::Mat GetCurrentMat() const { return this->CurrentMat; };
+  void SetCurrentMat( cv::Mat currentMat ) { this->CurrentMat = currentMat; };
+  double delayParam1 = 0, delayParam2 = 0, delayParam3;
 
-	public:
-		PointCloudInput(CameraInput* CamInput, ProjectorWidget* Projector, CalibrationData* Calib);
-		~PointCloudInput();
-		cv::Point3d approximate_ray_plane_intersection(const cv::Mat & T, const cv::Point3d & vc, const cv::Point3d & vp);
-		PointCloud ComputePointCloud(int numrows);
-		bool ComputePointCloudRow(cv::Mat *pointcloud, cv::Mat *pointcloud_colors, cv::Mat mat_color_ref, cv::Mat mat_color, cv::Mat imageTest, cv::Mat color_image, double delay, int row);
-		cv::Mat GetCurrentMat() const { return this->CurrentMat; };
-		void SetCurrentMat(cv::Mat currentMat) { this->CurrentMat = currentMat; };
-		double delayParam1 = 0, delayParam2 = 0, delayParam3;
+private:
+  bool debugColor = true;
+  cv::Vec3d debugColorVal{ 256, 0, 0 };
 
-	private:
-	    bool debugColor = true;
-		cv::Vec3d debugColorVal {256, 0, 0};
-		
-		CameraInput* CamInput;
-		ProjectorWidget* Projector;
-		
-		CalibrationData* Calib;
+  CameraInput* CamInput;
+  ProjectorWidget* Projector;
 
-		cv::Mat CurrentMat;
+  CalibrationData* Calib;
 
+  cv::Mat CurrentMat;
 };
-
-
 
 #endif

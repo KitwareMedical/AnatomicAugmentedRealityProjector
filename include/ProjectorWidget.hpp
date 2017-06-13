@@ -37,16 +37,16 @@ limitations under the License.
 
 class ProjectorWidget : public QWidget
 {
-  Q_OBJECT
+Q_OBJECT
 
 public:
-  ProjectorWidget(QWidget * parent = 0, Qt::WindowFlags flags = 0);
+  ProjectorWidget( QWidget * parent = 0, Qt::WindowFlags flags = 0 );
   ~ProjectorWidget();
 
   cv::Mat CreateLineImage();
   cv::Mat CreatePattern();
   cv::Mat CreateColoredImage( int blue, int green, int red );
-  std::vector<cv::Point2i> GetCoordLine(cv::Mat image);
+  std::vector<cv::Point2i> GetCoordLine( cv::Mat image );
 
   QPixmap GetPixmap() const { return this->Pixmap; };
   int GetWidth() const { return this->Width; };
@@ -56,11 +56,11 @@ public:
   unsigned char GetBlueColor() { return this->BlueColor; };
   unsigned char GetGreenColor() { return this->GreenColor; };
   unsigned char GetRedColor() { return this->RedColor; };
-  void SetPixmap(QPixmap image) { this->Pixmap = image; };
-  void SetWidth(int x) { this->Width = x; };
-  void SetHeight(int y) { this->Height = y; };
-  void SetLineThickness(int thickness) { this->LineThickness = thickness; };
-  void SetRow(int r) { this->Row = r; };
+  void SetPixmap( QPixmap image ) { this->Pixmap = image; };
+  void SetWidth( int x ) { this->Width = x; };
+  void SetHeight( int y ) { this->Height = y; };
+  void SetLineThickness( int thickness ) { this->LineThickness = thickness; };
+  void SetRow( int r ) { this->Row = r; };
   void SetBlueColor( unsigned char blue ) { this->BlueColor = blue; };
   void SetGreenColor( unsigned char green ) { this->GreenColor = green; };
   void SetRedColor( unsigned char red ) { this->RedColor = red; };
@@ -68,10 +68,10 @@ public:
   void start();
 
 signals:
-  void new_image(QPixmap pixmap);
+  void new_image( QPixmap pixmap );
 
 protected:
-  virtual void paintEvent(QPaintEvent *);
+  virtual void paintEvent( QPaintEvent * );
 
 private:
   QPixmap Pixmap;

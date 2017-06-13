@@ -35,32 +35,31 @@ limitations under the License.
 
 #include <iostream>
 
-ProjectorWidget::ProjectorWidget(QWidget * parent, Qt::WindowFlags flags) :
-  QWidget(parent, flags),
-  Height(1080),
-  Width(1920),
-  LineThickness(1),
-  Row(100),
-  BlueColor(255),
-  GreenColor(255),
-  RedColor(255)
-{}
+ProjectorWidget::ProjectorWidget( QWidget * parent, Qt::WindowFlags flags ) :
+  QWidget( parent, flags ),
+  Height( 1080 ),
+  Width( 1920 ),
+  LineThickness( 1 ),
+  Row( 100 ),
+  BlueColor( 255 ),
+  GreenColor( 255 ),
+  RedColor( 255 )
+{
+}
+
 
 ProjectorWidget::~ProjectorWidget()
 {
 }
 
+
 // /!\ Use of usigned char to code the color between 0 (black) and 255 (white)
 cv::Mat ProjectorWidget::CreateLineImage()
 {
-  cv::Mat image = cv::Mat::zeros(this->Height, this->Width, CV_8UC1); // use CV_32S for int
+  cv::Mat image = cv::Mat::zeros( this->Height, this->Width, CV_8UC1 ); // use CV_32S for int
   int lmax = 5 ;
-  for (int j = 0; j < image.rows; j++)
-  {
-    /*for (int t = 0; t < this->LineThickness; t++)
+  for( int j = 0; j < image.rows; j++ )
     {
-      image.at<unsigned char>(this->Row + t, j) = 255;
-    }*/
     for( int i = 0; i < image.cols; i = i + 2 * lmax )
       {
       for( int l = 0; l < lmax; l++ )
@@ -68,72 +67,73 @@ cv::Mat ProjectorWidget::CreateLineImage()
         image.at<unsigned char>( j, i + l ) = 255;
         }
       }
-  }
+    }
   return image;
 }
 
-cv::Mat ProjectorWidget::CreatePattern()
-  {
+
+cv::Mat ProjectorWidget::CreatePattern() // Create a rainbow
+{
   cv::Mat image = cv::Mat::zeros( this->Height, this->Width, CV_8UC3 );
   for( int j = 0; j < image.rows; j++ )
     {
-    float color = (j+1) * 180 / this->GetHeight();
+    float color = ( j + 1 ) * 180 / this->GetHeight();
     float row = color*this->GetHeight() / 180;
     std::cout << "color : " << color << " row : " << row << std::endl;
     for( int i = 0; i < image.cols; i++ )
       {
-      image.at<cv::Vec3b>( j, i ) = { unsigned char(j*180/this->GetHeight()), 255, 255 };
+      image.at<cv::Vec3b>( j, i ) = { unsigned char( j * 180 / this->GetHeight() ), 255, 255 };
       }
     }
   cv::cvtColor( image, image, cv::COLOR_HSV2BGR );
   return image;
-  }
+}
+
 
 cv::Mat ProjectorWidget::CreateColoredImage( int blue, int green, int red )
-  {
-  cv::Mat image = cv::Mat( this->Height, this->Width, CV_8UC3, { double(blue), double(green), double(red) } );
-  return image;
-  }
-
-std::vector<cv::Point2i> ProjectorWidget::GetCoordLine(cv::Mat image)
 {
-  // TODO: condition on type of matrix
+  cv::Mat image = cv::Mat( this->Height, this->Width, CV_8UC3, { double( blue ), double( green ), double( red ) } );
+  return image;
+}
+
+
+std::vector<cv::Point2i> ProjectorWidget::GetCoordLine( cv::Mat image )
+{
+    // TODO: condition on type of matrix
   std::vector<cv::Point2i> coord;
-  for (int i = 0; i < image.rows; i++)
-  {
-    unsigned char *row = image.ptr<unsigned char>(i);
-    //std::cout << "ligne : " << i << std::endl;
-    //std::cout << "row :" << *row << std::endl;
-    for (int j = 0; j < image.cols; j++)
+  for( int i = 0; i < image.rows; i++ )
     {
-      if ((int)row[j] != 0) // or =255
+    unsigned char *row = image.ptr<unsigned char>( i );
+    for( int j = 0; j < image.cols; j++ )
       {
-        coord.push_back(cv::Point2i(j, i));
+      if( ( int )row[ j ] != 0 ) // or =255
+        {
+        coord.push_back( cv::Point2i( j, i ) );
+        }
       }
     }
-  }
 
   return coord;
 }
 
-void ProjectorWidget::paintEvent(QPaintEvent *)
-{
-  QPainter painter(this);
 
-  if (!this->Pixmap.isNull())
-  {
-    //QPixmap scale_pixmap = Pixmap.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    //QRectF rect = QRectF(QPointF(0, 0), QPointF(scale_pixmap.width(), scale_pixmap.height()));
-    QRectF rect = QRectF(QPointF(0, 0), QPointF(width(), height()));
-    painter.drawPixmap(rect, this->Pixmap, rect);
-    emit new_image(this->Pixmap);
-  }
+void ProjectorWidget::paintEvent( QPaintEvent * )
+{
+  QPainter painter( this );
+
+  if( !this->Pixmap.isNull() )
+    {
+    QRectF rect = QRectF( QPointF( 0, 0 ), QPointF( width(), height() ) );
+    painter.drawPixmap( rect, this->Pixmap, rect );
+    emit new_image( this->Pixmap );
+    }
   else
-  {
-    QRectF rect = QRectF(QPointF(0, 0), QPointF(width(), height()));
-    painter.drawText(rect, Qt::AlignCenter, "No image");
-  }
+    {
+    QRectF rect = QRectF( QPointF( 0, 0 ), QPointF( width(), height() ) );
+    painter.drawText( rect, Qt::AlignCenter, "No image" );
+    }
 }
+
 
 void ProjectorWidget::start()
 {
@@ -156,8 +156,8 @@ void ProjectorWidget::start()
     }
   // We choose the last screen added (highest number) = the projector
   //display
-  QRect screen_resolution = desktop->screenGeometry(screen - 1);
-  move(QPoint(screen_resolution.x(), screen_resolution.y()));
+  QRect screen_resolution = desktop->screenGeometry( screen - 1 );
+  move( QPoint( screen_resolution.x(), screen_resolution.y() ) );
   showFullScreen();
   QApplication::processEvents();
 }
