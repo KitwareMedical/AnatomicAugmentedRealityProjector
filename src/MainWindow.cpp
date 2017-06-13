@@ -885,7 +885,7 @@ void MainWindow::on_analyze_clicked()
 void MainWindow::Analyze()
 {
   QCoreApplication::processEvents();
-  PointCloud pointcloud = this->PCInput.ComputePointCloud(45);
+  PointCloud pointcloud = this->PCInput.ComputePointCloud(this->ui->fastScanLines->value());
 
   if( !pointcloud.points.data )
     {
