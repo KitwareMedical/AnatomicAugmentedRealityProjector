@@ -22,6 +22,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 =========================================================================*/
+
 #ifndef CAMERAINPUT_HPP
 #define CAMERAINPUT_HPP
 
@@ -32,9 +33,10 @@ limitations under the License.
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+
 class CameraInput
 {
-public :
+public:
   CameraInput();
   ~CameraInput();
 
@@ -43,22 +45,18 @@ public :
   bool Run(); // return true if a camera was found and successfully started
   bool Stop();
 
-  void SetCameraTriggerDelay(double delay);
+  void SetCameraTriggerDelay( double delay );
   void IncrementTriggerDelay();
 
-  void SetTriggerMode(int mode);
-  
-  void SetCameraFrameRate(double framerate);
+  void SetCameraFrameRate( double framerate );
   double GetCameraFrameRate();
   void FindTopBottomLines( cv::Mat mat_color_ref, cv::Mat mat_color );
 
-  //void SetFrameRate(double frameRate) { this->FrameRate = frameRate; };
-  void SetNbImages(int nbImages) { this->NbImages = nbImages; };
+  void SetNbImages( int nbImages ) { this->NbImages = nbImages; };
   void SetTopLine( int topLine ) { this->TopLine = topLine; };
   void SetBottomLine( int bottomLine ) { this->BottomLine = bottomLine; };
   void SetBufferSize( int size ) { this->BufferSize = size; };
 
-  //double GetFrameRate() const { return this->FrameRate; };
   int GetNbImages() const { return this->NbImages; };
   int GetTopLine() const { return this->TopLine; };
   int GetBottomLine() const { return this->BottomLine; };
@@ -72,16 +70,15 @@ public :
 
   FlyCapture2::Camera Camera;
 
-private :
+private:
   //double FrameRate;
   double delay = 0;
-	
+
   int NbImages;
   int TopLine;
   int BottomLine;
   std::vector<cv::Mat> FrameBuffer;
   int BufferSize;
 };
-
 
 #endif

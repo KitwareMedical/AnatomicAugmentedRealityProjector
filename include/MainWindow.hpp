@@ -35,34 +35,37 @@ limitations under the License.
 #include <QLabel>
 
 
-namespace Ui {
+namespace Ui
+{
   class MainWindow;
 }
 
+
 class Vec2iHash
-  {
-  public:
-    std::size_t operator()( const cv::Vec2i &vec ) const
-      {
-      std::size_t s = std::hash<int>()( ( vec( 1 ) << 8 ) | ( vec( 0 ) ) );
-      //std::cout << "Hash code : " << s << std::endl;
-      return s;
-      }
-  };
+{
+public:
+  std::size_t operator()( const cv::Vec2i &vec ) const
+    {
+    std::size_t s = std::hash<int>()( ( vec( 1 ) << 8 ) | ( vec( 0 ) ) );
+    //std::cout << "Hash code : " << s << std::endl;
+    return s;
+    }
+};
+
 
 class MainWindow : public QMainWindow
-  {
-  Q_OBJECT
+{
+Q_OBJECT
 
 public:
   explicit MainWindow( QWidget *parent = 0 );
   ~MainWindow();
 
-  cv::Mat NNClassifyColors(cv::Mat colors);
-  void NNDensityProbabilityReplacement(cv::Mat pointcloud, cv::Mat pointcloud_BGR, std::vector<cv::Vec3f> *points_B, std::vector<cv::Vec3f> *points_G, std::vector<cv::Vec3f> *points_R, double threshold);
-  void MainWindow::ProjectPointCloud(PointCloud p);
-  void MainWindow::PutImageOnPointCloud(PointCloud p, cv::Mat Image, cv::Vec3f Origin, cv::Vec3f u1, cv::Vec3f u2, cv::Vec3f u3);
-  cv::Point3d approximate_ray_plane_intersection(const cv::Mat & T, const cv::Point3d & vc, const cv::Point3d & vp);
+  cv::Mat NNClassifyColors( cv::Mat colors );
+  void NNDensityProbabilityReplacement( cv::Mat pointcloud, cv::Mat pointcloud_BGR, std::vector<cv::Vec3f> *points_B, std::vector<cv::Vec3f> *points_G, std::vector<cv::Vec3f> *points_R, double threshold );
+  void MainWindow::ProjectPointCloud( PointCloud p );
+  void MainWindow::PutImageOnPointCloud( PointCloud p, cv::Mat Image, cv::Vec3f Origin, cv::Vec3f u1, cv::Vec3f u2, cv::Vec3f u3 );
+  cv::Point3d approximate_ray_plane_intersection( const cv::Mat & T, const cv::Point3d & vc, const cv::Point3d & vp );
 
   bool ComputePointCloud( cv::Mat *pointcloud, cv::Mat *pointcloud_colors, cv::Mat mat_color_ref, cv::Mat mat_color, cv::Mat imageTest, cv::Mat color_image, double delay );
   cv::Mat GetCurrentMat() const { return this->CurrentMat; };
@@ -84,7 +87,7 @@ protected slots:
   void on_cam_display_clicked();
   void on_cam_record_clicked();
   void on_analyze_clicked();
-  void _on_new_projector_image(QPixmap image);
+  void _on_new_projector_image( QPixmap image );
 
   void DisplayCamera();
   void Analyze();
@@ -108,7 +111,7 @@ private:
   ProjectorWidget Projector;
   PointCloud hires;
   CameraInput CamInput;
-  PointCloudInput PCInput = PointCloudInput(&CamInput, &Projector, &Calib);
+  PointCloudInput PCInput = PointCloudInput( &CamInput, &Projector, &Calib );
   QTimer *timer;
   QTimer *AnalyzeTimer;
   CalibrationData Calib;
