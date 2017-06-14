@@ -488,6 +488,27 @@
                </item>
              </layout>
           </item>
+           <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_241">
+               <item>
+                 <widget class="QLabel" name="label_439">
+                   <property name="text">
+                     <string>Lines In Fast Scan</string>
+                   </property>
+                 </widget>
+               </item>
+               <item>
+                 <widget class="QSpinBox" name="fastScanLines">
+                   <property name="maximum">
+                     <double>600</double>
+                   </property>
+                   <property name="value">
+                     <double>45</double>
+                   </property>
+                 </widget>
+               </item>
+             </layout>
+           </item>
           <item>
            <widget class="QPushButton" name="analyze">
             <property name="text">
