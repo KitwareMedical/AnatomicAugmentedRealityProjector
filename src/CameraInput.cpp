@@ -150,7 +150,7 @@ bool CameraInput::Configure()
   mTrigger.source = 0;
   mTrigger.parameter = 0;
   mTrigger.onOff = true;
-  mTrigger.polarity = 1;
+  mTrigger.polarity = 0;
   error = Camera.SetTriggerMode( &mTrigger );
   if( error != PGRERROR_OK )
     {
