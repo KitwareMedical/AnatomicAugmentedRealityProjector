@@ -926,7 +926,7 @@ std::vector<cv::Vec3f> MainWindow::ransac( std::vector<cv::Vec3f> points, int mi
   // initialize random seed :
   srand( time( 0 ) );
 
-  double cube_diagonal = 3; //cm
+  double cube_diagonal = 5.5; //cm
   for( int i = 0; i < iter; i++ )
     {
     // Select 3 points randomly
