@@ -60,8 +60,9 @@ PointCloud PointCloudInput::ComputePointCloud( int numrows )
   cv::Mat mat_color_ref = this->CamInput->GetImageFromBuffer();
 
   double max_delay = .0119;
+  double min_delay = 0.0;
+  double delta = ( max_delay - min_delay ) / numrows;
 
-  double delta = max_delay / numrows;
 
   cv::Mat pointcloud = cv::Mat::zeros( numrows, mat_color_ref.cols, CV_32FC3 );
   cv::Mat pointcloud_colors = cv::Mat( numrows, mat_color_ref.cols, CV_8UC3 );
@@ -78,7 +79,7 @@ PointCloud PointCloudInput::ComputePointCloud( int numrows )
   for( int depth_map_row = 0; depth_map_row < numrows; depth_map_row++ )
     {
     crt_mat = this->CamInput->GetImageFromBuffer();
-    double nextDelay = ( depth_map_row + 1 ) * delta;
+    double nextDelay = ( depth_map_row + 1 ) * delta + min_delay;
     // Begin changing the delay for the next image before processing the current image. There are silent errors
     // If you take a picture too soon after changing the delay
     this->CamInput->SetCameraTriggerDelay( nextDelay );
