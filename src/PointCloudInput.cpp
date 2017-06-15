@@ -71,7 +71,6 @@ PointCloud PointCloudInput::ComputePointCloud( int numrows )
   std::cout << "Start : 3D reconstruction of every line" << std::endl;
   // imageTest is used to control which points have been used on the projector for the reconstruction
   cv::Mat imageTest = cv::Mat::zeros( mat_color_ref.rows, mat_color_ref.cols, CV_8UC3 );
-  QString imagename;
   cv::Mat crt_mat;
   cv::Mat color_image = cv::Mat::zeros( mat_color_ref.rows, mat_color_ref.cols, CV_8UC3 );
 
@@ -86,8 +85,9 @@ PointCloud PointCloudInput::ComputePointCloud( int numrows )
     ComputePointCloudRow( &pointcloud, &pointcloud_colors, mat_color_ref, crt_mat, imageTest, color_image, nextDelay - delta, depth_map_row );
     }
 
-    //imagename = QString( "C:\\Camera_Projector_Calibration\\Tests_publication\\color_image.png" );
-    //cv::imwrite( qPrintable( imagename ), color_image );
+  //QString imagename;
+  //imagename = QString( "C:\\Camera_Projector_Calibration\\Tests_publication\\color_image.png" );
+  //cv::imwrite( qPrintable( imagename ), color_image );
 
   std::cout << "End : 3D reconstruction of every line" << std::endl;
   return{ pointcloud, pointcloud_colors };
@@ -242,14 +242,6 @@ bool PointCloudInput::ComputePointCloudRow( cv::Mat *pointcloud, cv::Mat *pointc
       cloud_color[ 2 ] = vec_R;
       color_image.at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x ) = cv::Vec3b{ vec_B, vec_G, vec_R };
 
-      if( row < 780 && row > 395 )
-        {
-        imageTest.at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x ) = { 0, 255, 0 };
-        }
-      else
-        {
-        imageTest.at<cv::Vec3b>( ( *it_cam_points ).y, ( *it_cam_points ).x ) = { 255, 255, 255 };
-        }
       }
     }
 
