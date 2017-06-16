@@ -313,6 +313,7 @@ void CameraInput::SetCameraTriggerDelay( double delay )
       }
     else
       {
+      prop.onOff = true;
       prop.autoManualMode = false;
       // Set the frame rate.
       // Note that the actual recording frame rate may be slower,
