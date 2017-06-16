@@ -121,6 +121,12 @@ MainWindow::MainWindow( QWidget *parent ) :
 
   hires = PCInput.ComputePointCloud( 300 );
   save_pointcloud( hires.points, hires.colors, "hires" );
+
+  for (int row = 0; row < hires.colors.rows; row++){
+	  for (int col = 0; col < hires.colors.cols; col++){
+		  hires.colors.at<cv::Vec3b>(row, col) = {255, 255, 255};
+	  }
+  }
 }
 
 
