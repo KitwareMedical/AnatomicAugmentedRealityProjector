@@ -22,14 +22,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 =========================================================================*/
+
 #ifndef FILECONFIGURATION_H
 #define FILECONFIGURATION_H
 
+#define CAMERA_CALIB_FILE_LOCATION "@CMAKE_SOURCE_DIR@/CalibrationFile.yml"
 
-#define CAMERA_CALIB_FILE_LOCATION "C:\\D\\3Dscan\\AnatomicAugmentedRealityProjector\\CalibrationFile.yml"
+#define POINTCLOUD_FOLDER "@PROJECT_BINARY_DIR@/"
 
-#define POINTCLOUD_FOLDER "C:\\D\\pointclouds\\"
-
-#define TRACKING_OUT_FILE  "C:\\D\\pointclouds\\outputs\\positions.txt"
+#define TRACKING_OUT_FILE  "@PROJECT_BINARY_DIR@/positions.txt"
 
 #endif
