@@ -1,11 +1,14 @@
-Point Grey Camera configuration:
-Custom Video Mode 2
-Advanced Camera Settings -> Shutter -> Max 2
-Trigger -> mode 0, delay enabled, wiggle delay slider (otherwise setting doesn't stick)
+Ultrasound Augmentation: Rapid 3-D Scanning for Tracking and On-Body Display
+============================================================================
 
-brightness to 0%
-exposure to -2
 
-FileConfigureation.h:
+By using a laser projector and high speed camera, we can add three capabilities to an ultrasound system: tracking the probe, tracking the patient, and projecting information onto the probe and patient. We can use these capabilities to guide an untrained operator to take high quality, well framed ultrasound images which can be passed to existing or novel diagnosis algorithms.
 
-Copy FileConfigurationExample.h to FileConfiguration.h, change paths to suit your system
+
+Requirements :
+--------------
+
+* OpenCV 3.1.0
+* ITK
+* FlyCapture API
+* Qt5
