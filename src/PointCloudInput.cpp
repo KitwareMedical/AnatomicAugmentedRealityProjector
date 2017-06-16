@@ -182,7 +182,7 @@ bool PointCloudInput::ComputePointCloudRow( cv::Mat *pointcloud, cv::Mat *pointc
 
   double normalizedDelay = delay / .0119;
   double row = delayParam1 * normalizedDelay + delayParam2 * ( 1 - normalizedDelay );
-  std::cout << delayParam1 << " " << delayParam2 << " " << row << std::endl;
+  
   //double row = (delayParam1 - delay / delayParam2) *this->Projector->GetHeight();
   
   // TODO : check wether the computed row is consistent or not

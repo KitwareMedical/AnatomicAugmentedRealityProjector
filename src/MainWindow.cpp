@@ -311,6 +311,12 @@ void MainWindow::on_detect_colors_clicked()
 {
   hires = PCInput.ComputePointCloud( 300 );
   save_pointcloud( hires.points, hires.colors, "hires" );
+
+  for (int row = 0; row < hires.colors.rows; row++){
+	  for (int col = 0; col < hires.colors.cols; col++){
+		  hires.colors.at<cv::Vec3b>(row, col) = { 255, 255, 255 };
+	  }
+  }
   return;
 }
 
@@ -523,7 +529,6 @@ void MainWindow::Analyze()
   intersection_circle = three_planes_intersection( normal_blue, normal_green, normal_red, A_blue, A_green, A_red );
   std::cout << "Intersection_circle : " << intersection_circle << std::endl;
 
-  //save_pointcloud_plane_intersection( hires.points, hires.colors, normal_blue, normal_green, normal_red, A_blue, A_green, A_red, intersection_circle, 0.15f, "pointcloud_BGR_plane_circles" );
   std::fstream outputFile;
   outputFile.open( TRACKING_OUT_FILE, std::ios_base::app );
   outputFile << "Intersection_circle : " << intersection_circle << "    Normals (RGB)" << normal_red << normal_green << normal_blue << "    Time: " << std::chrono::system_clock::to_time_t( std::chrono::system_clock::now() ) << std::endl;
@@ -532,7 +537,7 @@ void MainWindow::Analyze()
 
   if( this->ui->drawBox->isChecked() )
     {
-    PutImageOnPointCloud( hires, cv::Mat::zeros( 100, 100, CV_8UC3 ), intersection_circle, normal_red, normal_green, normal_blue );
+    PutImageOnPointCloud( hires, cv::imread(POINTCLOUD_FOLDER  "IMAGE_PROJECT.png"), intersection_circle, normal_red, normal_green, normal_blue );
     }
 
   if( this->ui->drawArt->isChecked() )
@@ -559,8 +564,11 @@ void MainWindow::Analyze()
         }
       }
     }
+  PointCloud temp = { hires.points, hires.colors.clone() };
+  save_pointcloud_plane_intersection(temp.points, temp.colors, normal_blue, normal_green, normal_red, A_blue, A_green, A_red, intersection_circle, 0.15f, "pointcloud_BGR_plane_circles");
 
-  //ProjectPointCloud( hires );
+
+  ProjectPointCloud( temp );
   QCoreApplication::processEvents();
   if( this->ui->loop->isChecked() )
     {
@@ -727,13 +735,14 @@ void MainWindow::PutImageOnPointCloud( PointCloud p, cv::Mat Image, cv::Vec3f or
 
       x += 8.5;
       y -= 4.5;
-      x *= 10;
+      x *= 70;
       x += Image.rows / 2;
-      y *= 10;
+      y *= -70;
+	  y += Image.rows;
 
       if( ( x >= 0 && y >= 0 && x < Image.cols &&  y < Image.rows ) )
         {
-        p.colors.at<cv::Vec3b>( line, column ) = cv::Vec3b( x, y, 255 );//Image.at<cv::Vec3b>(x, y);
+        p.colors.at<cv::Vec3b>( line, column ) = Image.at<cv::Vec3b>(x, y);
         }
       else
         {
@@ -1317,7 +1326,7 @@ void MainWindow::save_pointcloud_plane_intersection( cv::Mat pointcloud, cv::Mat
           }
         else
           {
-          pointcloud_colors.at<cv::Vec3b>( row, col ) = cv::Vec3f( 255, 255, 255 );
+          //pointcloud_colors.at<cv::Vec3b>( row, col ) = cv::Vec3f( 255, 255, 255 );
           }
         }
       }
