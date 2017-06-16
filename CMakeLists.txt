@@ -37,15 +37,6 @@ find_package(FlyCapture REQUIRED)
 find_package(ITK REQUIRED)
 include(${ITK_USE_FILE})
 
-# if(ITKVtkGlue_LOADED)
-  # find_package(VTK REQUIRED)
-  # include(${VTK_USE_FILE})
-# else()
-  # find_package(ItkVtkGlue REQUIRED)
-  # include(${ItkVtkGlue_USE_FILE})
-  # set(Glue ItkVtkGlue)
-# endif()
-
 set( source_files
   src/CalibrationData.cpp
   src/CameraInput.cpp
@@ -59,7 +50,6 @@ set( source_files
 set( include_files
   include/CalibrationData.hpp
   include/CameraInput.hpp
-  include/FileConfiguration.h
   include/io_util.hpp
   include/MainWindow.hpp
   include/PointCloudInput.hpp
@@ -72,6 +62,8 @@ qt5_wrap_cpp( moc_files
   ${AnatomicAugmentedRealityProjector_SOURCE_DIR}/include/ProjectorWidget.hpp
   )
 
+configure_file( cmake/FileConfiguration.h.in ${CMAKE_CURRENT_BINARY_DIR}/FileConfiguration.h)  
+
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} ${FLYCAPTURE_INCLUDE_DIR} include)
 
 add_executable( AnatomicAugmentedRealityProjector
@@ -81,12 +73,9 @@ add_executable( AnatomicAugmentedRealityProjector
   ${moc_files}
   )
 
-
 target_link_libraries( AnatomicAugmentedRealityProjector
   Qt5::Widgets Qt5::Concurrent 
   ${OpenCV_LIBS} 
   ${FLYCAPTURE2_LIB}
   ${ITK_LIBRARIES}
-  #${VTK_LIBRARIES}
-  #${Glue}
   )
