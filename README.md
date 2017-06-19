@@ -11,4 +11,14 @@ Requirements :
 * OpenCV 3.1.0
 * ITK
 * FlyCapture API
-* Qt5
+* Qt5 
+
+CMake Configuration :
+---------------
+When configuring this project, be sure to select a 64 bit visual studio generator.
+Set Qt5WidgetsDir to (Path to Qt)/Qt/5.9/msvc(your version here)/lib/cmake/Qt5Widgets
+Set ITK_DIR to  (Path to ITK)/ITK/build
+Be sure ITK is compiled for a 64 bit executable.
+Set OpenCV_DIR to (Path to openCV)/opencv/build
+
+Once this project has compiled, copy the missing dlls from their respective bin folders.
